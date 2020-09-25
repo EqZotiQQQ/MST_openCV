@@ -8,8 +8,8 @@
 #include <opencv2/core.hpp>
 
 int main() {
-	int ret = 0;
-	GraphProcessor gp;
-	ret = gp.lunch();
-	return ret;
+    int ret = 0;
+    GraphProcessor gp;
+    ret = gp.lunch();
+    return ret;
 }
