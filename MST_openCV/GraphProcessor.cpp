@@ -14,6 +14,7 @@ GraphProcessor::GraphProcessor(const int weight, const int height, const std::st
         mImgRows(weight),
         mImgCols(height),
         mImgWindowName(imageName)
+        //mDistances(std::make_shared<std::unordered_map<NodeCoords, distance>>())
         //mpImage(std::move(std::make_unique<cv::Mat>(mImgRows, mImgCols, CV_8UC3, cv::Scalar(0, 0, 0))))//idk why but it doesn't work
 {
     mpImage =cv::Mat(mImgRows, mImgCols, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -36,6 +37,9 @@ void GraphProcessor::smMouseCallback(int event, int x, int y, int flags, void* p
 //TODO: 1. calculate distances between nodes; 2. connect it.
 void GraphProcessor::process(const int x, const int y) noexcept {
     tree.clear();
+    tree.reserve(nodes.size());
+    freeNodes.clear();
+    freeNodes.reserve(nodes.size());
     nodes.emplace_back(std::make_pair(x, y));
     if(nodes.size() > 1) {
         connectMST();
@@ -44,7 +48,15 @@ void GraphProcessor::process(const int x, const int y) noexcept {
 }
 
 void GraphProcessor::connectMST() noexcept {
-    
+    for (const auto& nodeA : nodes) {
+        for (const auto& nodeB : nodes) {
+            if (nodeA.first == nodeB.second && nodeA.second == nodeB.first) {
+                continue;
+            }
+            auto distanceAB = std::sqrt(std::pow(nodeB.first-nodeA.first, 2) + std::pow(nodeB.second - nodeA.second, 2));
+            //mDistances[]
+        }
+    }
 }
 
 int GraphProcessor::lunch() noexcept {
