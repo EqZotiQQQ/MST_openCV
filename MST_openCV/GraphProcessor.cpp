@@ -10,7 +10,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/core.hpp>
 
-
+constexpr bool DEBUG {false};
 /*
 TODO:
 remove camel case
@@ -24,74 +24,79 @@ using dotsPair_t            = std::pair<dot_t, dot_t>;
 using totalDistances_t      = std::unordered_map<dotsPair_t, distance_t, KeyHasherPair<dotsPair_t>>;
 using nodes_t               = std::vector<std::pair<int, int>>;
 
-GraphProcessor::GraphProcessor(const int weight, const int height, const std::string imageName) noexcept:
-        mImgRows(weight),
-        mImgCols(height),
-        mImgWindowName(imageName)
+GraphProcessor::GraphProcessor(const int rows, const int columns, const std::string image_name) noexcept:
+        m_img_rows(rows),
+        m_img_columns(columns),
+        m_window_name(image_name)
         //mDistances(std::make_shared<std::unordered_map<NodeCoords, distance>>())
         //mpImage(std::move(std::make_unique<cv::Mat>(mImgRows, mImgCols, CV_8UC3, cv::Scalar(0, 0, 0))))//idk why but it doesn't work
 {
-    mpImage = cv::Mat(mImgRows, mImgCols, CV_8UC3, cv::Scalar(0, 0, 0));
-    printf("Picture size: %d X %d\n", mpImage.rows, mpImage.cols);
+    m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0));
+    printf("Image size: [%d %d]\n", m_image.rows, m_image.cols);
 }
 
 GraphProcessor::~GraphProcessor() noexcept {
-    std::cout << "destroyed" << std::endl;
 }
 
-void GraphProcessor::smMouseCallback(int event, int x, int y, int flags, void* param) noexcept {    /*param - image*/
-    //printf("event! x: %d; y: %d\n", x, y);
+void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* param) noexcept {    /*param - image*/
     auto graphProcesser = static_cast<GraphProcessor*>(param);
     if (event == cv::EVENT_LBUTTONDOWN) {
-        graphProcesser->process(x, y);
+        graphProcesser->process_realtime(x, y);
     }
 }
 
 
 //TODO: 1. calculate distances between nodes; 2. connect it.
-void GraphProcessor::process(const int x, const int y) noexcept {
-    tree.clear();
-    tree.reserve(nodes.size());
-    freeNodes.clear();
-    freeNodes.reserve(nodes.size());
-    nodes.emplace_back(std::make_pair(x, y));
-    calculateDistances();
-    connectMST();
-    printNodes();
-    std::cout << "-------------------------------" << std::endl;
+void GraphProcessor::process_realtime(const int x, const int y) noexcept {
+    clean_entries();
+    m_all_nodes.emplace_back(std::make_pair(x, y));
+    calculate_distances();
+    connect_MST();
 }
 
-void GraphProcessor::staticProcess() noexcept {
-    nodes = {std::make_pair(50,20),
-            std::make_pair(60,30),
-            std::make_pair(50,30),
-            std::make_pair(70,40),
-            std::make_pair(80,10)
-    };
-    tree.clear();
-    tree.reserve(nodes.size());
-    freeNodes.clear();
-    freeNodes.reserve(nodes.size());
-    calculateDistances();
-    connectMST();
-    printNodes();
+void GraphProcessor::clean_entries() noexcept {
+    m_connected_nodes.clear();
+    m_connected_nodes.reserve(m_all_nodes.size());
+    m_not_connected_nodes.clear();
+    m_not_connected_nodes.reserve(m_all_nodes.size());
 }
 
-void GraphProcessor::connectMST() noexcept {
-    auto maxDist = findBiggestDistance();
-    while (freeNodes.size() > 0) {
-        if (tree.size() == 0) {
-            tree.push_back(*(freeNodes.begin()));
-            freeNodes.erase(freeNodes.begin());
+void GraphProcessor::calculate_distances() noexcept {
+    for (const auto& node : m_all_nodes) {
+        m_not_connected_nodes.push_back(node);
+    }
+    if (m_all_nodes.size() > 1) {
+        for (const auto& node_a : m_all_nodes) {
+            for (const auto& node_b : m_all_nodes) {
+                auto f = m_distances.find(std::make_pair(std::make_pair(node_b.first, node_b.second), std::make_pair(node_a.first, node_a.second)));//.contains in c++20
+                if (node_a.first == node_b.second && node_a.second == node_b.first
+                    || f != m_distances.end()
+                    || node_a.first == node_b.first && node_a.second == node_b.second) {
+                    continue;
+                }
+                auto distance = std::sqrt(std::pow(node_b.first - node_a.first, 2) + std::pow(node_b.second - node_a.second, 2));
+                m_distances.emplace(std::make_pair(std::make_pair(node_a.first, node_a.second), std::make_pair(node_b.first, node_b.second)), distance);
+            }
+        }
+    }
+    //print_distances();
+}
+
+void GraphProcessor::connect_MST() noexcept {
+    m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0));
+    create_circles();
+    double max_dist = find_max_distance();
+    while (m_not_connected_nodes.size() > 0) {
+        if (m_connected_nodes.size() == 0) {
+            m_connected_nodes.push_back(*(m_not_connected_nodes.begin()));
+            m_not_connected_nodes.erase(m_not_connected_nodes.begin());
         } else {
-            nodes_t::iterator iter = freeNodes.begin();
-            //matchClosestPair(iter, maxDist->second);
             nodes_t::const_iterator connected_node;
             nodes_t::const_iterator not_connected_node;
-            double min_distance = maxDist->second;
-            for (auto connected = tree.cbegin(); connected != tree.cend(); ++connected) {
-                for (auto not_connected = freeNodes.cbegin(); not_connected != freeNodes.cend(); ++not_connected) {
-                    double current_pair_distance = mDistances.find(std::make_pair(*connected, *not_connected))->second;
+            double min_distance = max_dist;
+            for (auto connected = m_connected_nodes.cbegin(); connected != m_connected_nodes.cend(); ++connected) {
+                for (auto not_connected = m_not_connected_nodes.cbegin(); not_connected != m_not_connected_nodes.cend(); ++not_connected) {
+                    double current_pair_distance = m_distances.find(std::make_pair(*connected, *not_connected))->second;
                     if (min_distance >= current_pair_distance) {
                         min_distance = current_pair_distance;
                         connected_node = connected;
@@ -99,47 +104,56 @@ void GraphProcessor::connectMST() noexcept {
                     }
                 }
             }
-            printf("connected on step: [%d %d\t%d %d\t%f]", connected_node->first, connected_node->second, not_connected_node->first, not_connected_node->second, min_distance);
-            tree.push_back(*not_connected_node);
-            freeNodes.erase(not_connected_node);
+            create_line(cv::Point(connected_node->first, connected_node->second), cv::Point(not_connected_node->first, not_connected_node->second));
+            m_connected_nodes.push_back(*not_connected_node);
+            m_not_connected_nodes.erase(not_connected_node);
         }
-
-        printf("\n===\tTree contains:\t");
-        for (const auto& i : tree) {
-            printf("[%d %d]\t", i.first, i.second);
-        }
-        printf("\n===\tTree doesnt contain:\t");
-        if (freeNodes.size() == 0) {
-            printf("NaN");
-        }
-        for (const auto& i : freeNodes) {
-            printf("[%d %d]\t", i.first, i.second);
-        }
-        printf("\n===check===\n");
+        cv::imshow(m_window_name, m_image);
     }
 }
 
-void GraphProcessor::matchClosestPair(nodes_t::iterator& iter, int maxDist) noexcept {
-
+void GraphProcessor::create_line(const cv::Point&& start, const cv::Point&& end) noexcept {
+    cv::line(m_image, start, end, cv::Scalar(80, 80, 80), 2, cv::LINE_4);
+}
+void GraphProcessor::create_circles() noexcept {
+    for (const auto& i : m_all_nodes) {
+        std::cout << "debug" << std::endl;
+        cv::circle(m_image, cv::Point(i.first, i.second), 3, cv::Scalar(80, 80, 80), -1, cv::LINE_AA);
+    }
 }
 
-totalDistances_t::iterator GraphProcessor::findBiggestDistance() noexcept {
+void GraphProcessor::print_distances() noexcept {
+    std::cout << "total nodes: " << m_all_nodes.size() << std::endl;
+    std::cout << "total distances: " << m_distances.size() << std::endl;
+    for (const auto& pair : m_distances) {
+        printf("[%d %d\t %d %d\t\t %f]\n",
+            pair.first.first.first, pair.first.first.second,
+            pair.first.second.first, pair.first.second.second,
+            pair.second);
+    }
+    printf("\n====================\n");
+}
+
+//totalDistances_t::iterator GraphProcessor::findBiggestDistance() noexcept {
+double GraphProcessor::find_max_distance() noexcept {
     return std::max_element
     (
-        std::begin(mDistances), std::end(mDistances),
+        std::begin(m_distances), std::end(m_distances),
         [](const auto & lhs, const auto & rhs) {
             return lhs.second < rhs.second;
         }
-    );
+    )->second;
 }
 
-int GraphProcessor::lunch() noexcept {
+int GraphProcessor::launch() noexcept {
     auto lunch_status{ true };
-    cv::namedWindow(mImgWindowName, cv::WINDOW_AUTOSIZE);
+    cv::namedWindow(m_window_name, cv::WINDOW_AUTOSIZE);
     while (lunch_status) {
-        cv::imshow(mImgWindowName, mpImage);
-        //this->staticProcess();
-        cv::setMouseCallback(mImgWindowName, smMouseCallback, this);    // 3rd param passes to callback
+        cv::imshow(m_window_name, m_image);
+        if (DEBUG == true) {
+            this->static_process();
+        }
+        cv::setMouseCallback(m_window_name, s_mouse_callback, this);
         auto c = cv::waitKey(0);
         if (c == 27) {
             lunch_status = false;
@@ -148,19 +162,19 @@ int GraphProcessor::lunch() noexcept {
     return 0;
 }
 
-void GraphProcessor::printNodes() noexcept {
+void GraphProcessor::print_data() noexcept {
     printf("Statistics\n");
-    printf("Count of nodes: %I64u\n", nodes.size());
+    printf("Count of nodes: %I64u\n", m_all_nodes.size());
     printf("List of nodes:\n");
-    for (const auto& i : nodes) {
+    for (const auto& i : m_all_nodes) {
         printf("[%d %d]\t", i.first, i.second);
     }
     std::cout << "\n====\nNodes and distances between nodes:" << std::endl;
-    if (mDistances.size() < 1) {
+    if (m_distances.size() < 1) {
         printf("NaN\n");
     }
     int j = 0;
-    for (const auto& i : mDistances) {
+    for (const auto& i : m_distances) {
         printf("%d [%d %d\t %d %d\t\t %f]\n",
             j++,
             i.first.first.first,
@@ -169,39 +183,20 @@ void GraphProcessor::printNodes() noexcept {
             i.first.second.second,
             i.second);
     }
-    std::cout << "====" << std::endl;
 }
 
 
-void GraphProcessor::calculateDistances() noexcept {
-    for (const auto& nodeA : nodes) {
-        freeNodes.push_back(nodeA);
-    }
-    /*for (auto first_iter = freeNodes.cbegin(); first_iter != freeNodes.cend(); ++first_iter) {
-        for (auto second_iter = freeNodes.cbegin(); second_iter != freeNodes.cend(); ++second_iter) {
-            auto f = mDistances.find(std::make_pair(std::make_pair(second_iter->first, second_iter->second), std::make_pair(first_iter->first, first_iter->second)));
-            if (first_iter == second_iter ||
-                    first_iter->first  == second_iter->second && 
-                    first_iter->second == second_iter->first) {
-                continue;
-            }
-            auto distanceAB = std::sqrt(std::pow(second_iter->first - first_iter->first, 2) + std::pow(second_iter->second - first_iter->second, 2));
-            mDistances.emplace(
-                std::make_pair(
-                    std::make_pair(first_iter->first, first_iter->second), 
-                    std::make_pair(second_iter->first, second_iter->second)
-                ), distanceAB);
-        }
-    }*/
-    for (const auto& nodeA : freeNodes) {
-        for (const auto& nodeB : freeNodes) {
-            auto f = mDistances.find(std::make_pair(std::make_pair(nodeB.first, nodeB.second), std::make_pair(nodeA.first, nodeA.second)));//.contains in c++20
-            if (nodeA.first == nodeB.second && nodeA.second == nodeB.first || f != mDistances.end() || nodeA.first == nodeB.first && nodeA.second == nodeB.second) {
-                continue;
-            }
-            auto distanceAB = std::sqrt(std::pow(nodeB.first - nodeA.first, 2) + std::pow(nodeB.second - nodeA.second, 2));
-            mDistances.emplace(std::make_pair(std::make_pair(nodeA.first, nodeA.second), std::make_pair(nodeB.first, nodeB.second)), distanceAB);
-        }
-    }
-    printNodes();
+void GraphProcessor::static_process() noexcept {
+    m_all_nodes = { std::make_pair(50,20),
+            std::make_pair(60,30),
+            std::make_pair(50,30),
+            std::make_pair(70,40),
+            std::make_pair(80,10)
+    };
+    m_connected_nodes.clear();
+    m_connected_nodes.reserve(m_all_nodes.size());
+    m_not_connected_nodes.clear();
+    m_not_connected_nodes.reserve(m_all_nodes.size());
+    calculate_distances();
+    connect_MST();
 }

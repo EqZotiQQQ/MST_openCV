@@ -10,6 +10,6 @@
 int main() {
     int ret = 0;
     GraphProcessor gp;
-    ret = gp.lunch();
+    ret = gp.launch();
     return ret;
 }

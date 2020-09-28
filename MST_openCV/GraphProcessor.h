@@ -34,27 +34,30 @@ public:
     using totalDistances_t      = std::unordered_map<dotsPair_t, distance_t, KeyHasherPair<dotsPair_t>>;
     using nodes_t               = std::vector<std::pair<int, int>>;
 
-    GraphProcessor(const int weight = 320, const int height = 240, const std::string imageName = "image") noexcept;
+    GraphProcessor(const int rows = 800, const int columns = 800, const std::string image_name = "image") noexcept;
     ~GraphProcessor() noexcept;
-    static void smMouseCallback(int event, int x, int y, int flags, void* param) noexcept;
-    void connectMST() noexcept;
-    void process(const int x, const int y) noexcept;
-    void staticProcess() noexcept;
-    void printNodes() noexcept;
-    int lunch() noexcept;
+    static void s_mouse_callback(int event, int x, int y, int flags, void* param) noexcept;
+    void connect_MST() noexcept;
+    void process_realtime(const int x, const int y) noexcept;
+    void static_process() noexcept;
+    void print_data() noexcept;
+    int launch() noexcept;
 private:
-    void calculateDistances() noexcept;
-    totalDistances_t::iterator findBiggestDistance() noexcept;
-    void matchClosestPair(nodes_t::iterator& iter, int maxDist) noexcept;
-    
-    cv::Mat mpImage;
-    std::string mImgWindowName;
-    nodes_t nodes;
-    nodes_t tree;
-    nodes_t freeNodes;
-    totalDistances_t mDistances;
-    const int mImgRows;
-    const int mImgCols;
+    void calculate_distances() noexcept;
+    void print_distances() noexcept;
+    void create_line(const cv::Point&& start, const cv::Point&& end) noexcept;
+    void create_circles() noexcept;
+    //totalDistances_t::iterator findBiggestDistance() noexcept;
+    double find_max_distance() noexcept;
+    void clean_entries() noexcept;
+    cv::Mat m_image;
+    std::string m_window_name;
+    nodes_t m_all_nodes;
+    nodes_t m_connected_nodes;
+    nodes_t m_not_connected_nodes;
+    totalDistances_t m_distances;
+    const int m_img_rows;
+    const int m_img_columns;
 };
 
 
