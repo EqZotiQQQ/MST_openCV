@@ -11,13 +11,7 @@
 #include <opencv2/core.hpp>
 
 constexpr bool DEBUG {false};
-/*
-TODO:
-remove camel case
-create more awesome names
-remove or create single place with printing info about tree
-add drawing
-*/
+
 using distance_t            = double;
 using dot_t                 = std::pair<int, int>;
 using dotsPair_t            = std::pair<dot_t, dot_t>;
@@ -117,7 +111,6 @@ void GraphProcessor::create_line(const cv::Point&& start, const cv::Point&& end)
 }
 void GraphProcessor::create_circles() noexcept {
     for (const auto& i : m_all_nodes) {
-        std::cout << "debug" << std::endl;
         cv::circle(m_image, cv::Point(i.first, i.second), 3, cv::Scalar(80, 80, 80), -1, cv::LINE_AA);
     }
 }
