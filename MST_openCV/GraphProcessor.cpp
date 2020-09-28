@@ -10,16 +10,26 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/core.hpp>
 
+
+using distance_t            = double;
+using dot_t                 = std::pair<int, int>;
+using dotsPair_t            = std::pair<dot_t, dot_t>;
+using totalDistances_t      = std::unordered_map<dotsPair_t, distance_t, KeyHasherPair<dotsPair_t>>;
+using nodes_t               = std::vector<std::pair<int, int>>;
+
+
 GraphProcessor::GraphProcessor(const int rows, const int columns, const std::string image_name) noexcept:
         m_img_rows(rows),
         m_img_columns(columns),
-        m_window_name(image_name)
+        m_window_name(image_name),
+        m_cnt_connections(1)
         //mDistances(std::make_shared<std::unordered_map<NodeCoords, distance>>())
         //mpImage(std::move(std::make_unique<cv::Mat>(mImgRows, mImgCols, CV_8UC3, cv::Scalar(0, 0, 0))))//idk why but it doesn't work
 {
     m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0));
     printf("Image size: [%d %d]\n", m_image.rows, m_image.cols);
     printf("Press esc button to exit.\n");
+    printf("scroll up/down to increase/reduce number of connections");
 }
 
 GraphProcessor::~GraphProcessor() noexcept {
@@ -33,6 +43,25 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
     if (event == cv::EVENT_MOUSEMOVE) {
         graph_processor->connect_nearest(x, y);
     }
+    if (event == cv::EVENT_MOUSEWHEEL) {
+        if (cv::getMouseWheelDelta(flags) > 0) {
+            graph_processor->change_connectivity(1);
+        } else {
+            graph_processor->change_connectivity(0);
+        }
+    }
+}
+
+void GraphProcessor::change_connectivity(bool distination) noexcept {
+    if (distination) {
+        if (m_all_nodes.size() > m_cnt_connections) {
+            m_cnt_connections++;
+        }
+    } else {
+        if(m_cnt_connections > 1) {
+            m_cnt_connections--;
+        }
+    }
 }
 
 void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
@@ -40,20 +69,30 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
         return;
     }
     cv::Mat image = m_image.clone();
-    double min_distance = 0;
-    dot_t dot;
+    totalDistances_t nearest_dots;
     for (const auto& node : m_all_nodes) {
+        double min_distance = 0;
         auto distance = std::sqrt(std::pow(node.first - x, 2) + std::pow(node.second - y, 2));
         if (min_distance == 0 || min_distance > distance) {
             min_distance = distance;
-            dot = std::make_pair(node.first, node.second);
+        }
+        if (m_cnt_connections > nearest_dots.size()) {
+            nearest_dots.emplace(std::make_pair(std::make_pair(node.first, node.second), std::make_pair(x, y)), distance);
+        } else {
+            auto max_remouted_pair = find_max_distance(nearest_dots);
+            if(max_remouted_pair->second > min_distance) {
+                nearest_dots.erase(max_remouted_pair);
+                nearest_dots.emplace(std::make_pair(std::make_pair(node.first, node.second), std::make_pair(x, y)), distance);
+            }
         }
     }
-    create_line(image, cv::Point(dot.first, dot.second), cv::Point(x, y));
+    for (const auto& dot : nearest_dots) {
+        create_line(image, cv::Point(dot.first.first.first, dot.first.first.second), cv::Point(x, y));
+    }
     cv::imshow(m_window_name, image);
 }
 
-//TODO: 1. calculate distances between nodes; 2. connect it.
+
 void GraphProcessor::process_realtime(const int x, const int y) noexcept {
     clean_entries();
     m_all_nodes.emplace_back(std::make_pair(x, y));
@@ -91,7 +130,7 @@ void GraphProcessor::calculate_distances() noexcept {
 void GraphProcessor::connect_MST() noexcept {
     m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0));
     create_circles();
-    double max_dist = find_max_distance();
+    double max_dist = find_max_distance(m_distances)->second;
     while (m_not_connected_nodes.size() > 0) {
         if (m_connected_nodes.size() == 0) {
             m_connected_nodes.push_back(*(m_not_connected_nodes.begin()));
@@ -133,14 +172,14 @@ void GraphProcessor::create_circles() noexcept {
     }
 }
 
-double GraphProcessor::find_max_distance() noexcept {
+totalDistances_t::const_iterator GraphProcessor::find_max_distance(const totalDistances_t& container) noexcept {
     return std::max_element
     (
-        std::begin(m_distances), std::end(m_distances),
+        std::begin(container), std::end(container),
         [](const auto & lhs, const auto & rhs) {
             return lhs.second < rhs.second;
         }
-    )->second;
+    );
 }
 
 int GraphProcessor::launch() noexcept {

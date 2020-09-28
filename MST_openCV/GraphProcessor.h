@@ -9,10 +9,7 @@
 #include <iostream>
 #include <utility>
 
-
-
 constexpr bool DEBUG { false };
-
 
 template<typename T>
 struct KeyHasherPair {
@@ -30,7 +27,6 @@ struct KeyHasherPair {
 
 class GraphProcessor {
 public:
-
     using distance_t            = double;
     using dot_t                 = std::pair<int, int>;
     using dotsPair_t            = std::pair<dot_t, dot_t>;
@@ -40,6 +36,7 @@ public:
     GraphProcessor(const int rows = 800, const int columns = 800, const std::string image_name = "image") noexcept;
     ~GraphProcessor() noexcept;
     static void s_mouse_callback(int event, int x, int y, int flags, void* param) noexcept;
+    void change_connectivity(bool distination) noexcept;
     void connect_MST() noexcept;
     void process_realtime(const int x, const int y) noexcept;
     void connect_nearest(const int x, const int y) noexcept;
@@ -50,7 +47,7 @@ private:
     void calculate_distances() noexcept;
     void create_line(const cv::Mat& image, const cv::Point&& start, const cv::Point&& end) noexcept;
     void create_circles() noexcept;
-    double find_max_distance() noexcept;
+    static totalDistances_t::const_iterator find_max_distance(const totalDistances_t& container) noexcept;
     void clean_entries() noexcept;
     cv::Mat m_image;
     std::string m_window_name;
@@ -60,7 +57,43 @@ private:
     totalDistances_t m_distances;
     const int m_img_rows;
     const int m_img_columns;
+    int m_cnt_connections;
 };
+/*
+class Storage {
+public:
+    Storage() : m_threshold(1) {}
 
+    bool push_queue(const dotsPair_t&& element) {
+        if (m_storage.size() < m_threshold) {
+            m_storage.push_back(element);
+        } else {
+            double max_distance = 0;
+            for (auto iterator = m_storage.cbegin(); iterator != m_storage.cend(); ++iterator) {
+                if()
+            }
+        }
+        return true;
+    }
 
+    bool pop_queue() {
+        if (m_storage.size() == 0) {
+            return false;
+        }
+        return true;
+    }
+
+    int operator++() {
+        return m_threshold++;
+    }
+
+    int operator--() {
+        return m_threshold--;
+    }
+
+private:
+    std::vector<dotsPair_t> m_storage;
+    int m_threshold;
+};
+*/
 #endif
