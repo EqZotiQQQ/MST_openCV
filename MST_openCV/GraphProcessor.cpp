@@ -13,9 +13,9 @@
 
 using distance_t            = double;
 using dot_t                 = std::pair<int, int>;
-using dotsPair_t            = std::pair<dot_t, dot_t>;
-using totalDistances_t      = std::unordered_map<dotsPair_t, distance_t, KeyHasherPair<dotsPair_t>>;
-using nodes_t               = std::vector<std::pair<int, int>>;
+using dots_pair_t            = std::pair<dot_t, dot_t>;
+using total_distances_t      = std::unordered_map<dots_pair_t, distance_t, KeyHasherPair<dots_pair_t>>;
+using nodes_t               = std::vector<dot_t>;
 
 
 GraphProcessor::GraphProcessor(const int rows, const int columns, const std::string image_name) noexcept:
@@ -69,7 +69,7 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
         return;
     }
     cv::Mat image = m_image.clone();
-    totalDistances_t nearest_dots;
+    total_distances_t nearest_dots;
     for (const auto& node : m_all_nodes) {
         double min_distance = 0;
         auto distance = std::sqrt(std::pow(node.first - x, 2) + std::pow(node.second - y, 2));
@@ -141,7 +141,7 @@ void GraphProcessor::connect_MST() noexcept {
             double min_distance = max_dist;
             for (auto connected = m_connected_nodes.cbegin(); connected != m_connected_nodes.cend(); ++connected) {
                 for (auto not_connected = m_not_connected_nodes.cbegin(); not_connected != m_not_connected_nodes.cend(); ++not_connected) {
-                    totalDistances_t::const_iterator current_pair_distance;
+                    total_distances_t::const_iterator current_pair_distance;
                     if (m_distances.find(std::make_pair(*connected, *not_connected)) != m_distances.end()) {
                         current_pair_distance = m_distances.find(std::make_pair(*connected, *not_connected));
                     } else {
@@ -168,11 +168,11 @@ void GraphProcessor::create_line(const cv::Mat& image, const cv::Point&& start, 
 
 void GraphProcessor::create_circles() noexcept {
     for (const auto& i : m_all_nodes) {
-        cv::circle(m_image, cv::Point(i.first, i.second), 3, cv::Scalar(80, 80, 80), -1, cv::LINE_AA);
+        cv::circle(m_image, cv::Point(i.first, i.second), 3, cv::Scalar(120, 250, 120), -1, cv::LINE_AA);
     }
 }
 
-totalDistances_t::const_iterator GraphProcessor::find_max_distance(const totalDistances_t& container) noexcept {
+total_distances_t::const_iterator GraphProcessor::find_max_distance(const total_distances_t& container) noexcept {
     return std::max_element
     (
         std::begin(container), std::end(container),
