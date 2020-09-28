@@ -9,60 +9,50 @@
 #include <iostream>
 #include <utility>
 
-struct NodeCoords {
-    NodeCoords() = delete;
-    NodeCoords(int x, int y):
-            x(x),
-            y(y) {}
-    NodeCoords(const std::pair<int,int>& coords):
-            x(coords.first),
-            y(coords.second) {}
-    bool operator=(const NodeCoords& lhs) {
-        return this->x==lhs.x && this->y==lhs.y;
+
+
+template<typename T>
+struct KeyHasherPair {
+    using dot_t                 = std::pair<int, int>;
+    using dotsPair_t            = std::pair<dot_t, dot_t>;
+    std::size_t operator()(const dotsPair_t& k) const {
+        using std::hash;
+        auto h11 = hash<int>()(k.first.first);
+        auto h12 = hash<int>()(k.first.second);
+        auto h21 = hash<int>()(k.second.first);
+        auto h22 = hash<int>()(k.second.second);
+        return ((h11 ^ h12 ^ h21 ^ h22));
     }
-    int x;
-    int y;
 };
 
-struct KeyHasherNode {
-    std::size_t operator()(const NodeCoords& k) const {
-        using std::size_t;
-        using std::hash;
-        using std::string;
-        auto h1 = hash<int>()(k.x);
-        auto h2 = hash<int>()(k.y) << 1;
-        return ((h1 ^ h2) >> 1);
-    }
-};
-/* TODO: create hash function for mDistances
-struct KeyHasherPair {
-    std::size_t operator()(const std::pair<NodeCoords, NodeCoords>& k) const {
-        using std::size_t;
-        using std::hash;
-        using std::string;
-        auto h1 = hash<NodeCoords>()(k.first);
-        auto h2 = hash<NodeCoords>()(k.second) << 1;
-        return ((h1 ^ h2) >> 1);
-    }
-};
-*/
 class GraphProcessor {
 public:
-    using distance = double;
+
+    using distance_t            = double;
+    using dot_t                 = std::pair<int, int>;
+    using dotsPair_t            = std::pair<dot_t, dot_t>;
+    using totalDistances_t      = std::unordered_map<dotsPair_t, distance_t, KeyHasherPair<dotsPair_t>>;
+    using nodes_t               = std::vector<std::pair<int, int>>;
+
     GraphProcessor(const int weight = 320, const int height = 240, const std::string imageName = "image") noexcept;
     ~GraphProcessor() noexcept;
     static void smMouseCallback(int event, int x, int y, int flags, void* param) noexcept;
     void connectMST() noexcept;
     void process(const int x, const int y) noexcept;
+    void staticProcess() noexcept;
     void printNodes() noexcept;
     int lunch() noexcept;
 private:
+    void calculateDistances() noexcept;
+    totalDistances_t::iterator findBiggestDistance() noexcept;
+    void matchClosestPair(nodes_t::iterator& iter, int maxDist) noexcept;
+    
     cv::Mat mpImage;
     std::string mImgWindowName;
-    std::vector<std::pair<int,int>> nodes;
-    std::vector<std::pair<int,int>> tree;
-    std::vector<std::pair<int,int>> freeNodes;
-    //std::unordered_map<std::pair<NodeCoords, NodeCoords>, distance, TODO> mDistances;
+    nodes_t nodes;
+    nodes_t tree;
+    nodes_t freeNodes;
+    totalDistances_t mDistances;
     const int mImgRows;
     const int mImgCols;
 };
