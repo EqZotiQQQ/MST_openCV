@@ -90,9 +90,14 @@ void GraphProcessor::connect_MST() noexcept {
             double min_distance = max_dist;
             for (auto connected = m_connected_nodes.cbegin(); connected != m_connected_nodes.cend(); ++connected) {
                 for (auto not_connected = m_not_connected_nodes.cbegin(); not_connected != m_not_connected_nodes.cend(); ++not_connected) {
-                    double current_pair_distance = m_distances.find(std::make_pair(*connected, *not_connected))->second;
-                    if (min_distance >= current_pair_distance) {
-                        min_distance = current_pair_distance;
+                    totalDistances_t::const_iterator current_pair_distance;
+                    if (m_distances.find(std::make_pair(*connected, *not_connected)) != m_distances.end()) {
+                        current_pair_distance = m_distances.find(std::make_pair(*connected, *not_connected));
+                    } else {
+                        current_pair_distance = m_distances.find(std::make_pair(*not_connected, *connected));
+                    }
+                    if (min_distance >= current_pair_distance->second) {
+                        min_distance = current_pair_distance->second;
                         connected_node = connected;
                         not_connected_node = not_connected;
                     }
@@ -109,6 +114,7 @@ void GraphProcessor::connect_MST() noexcept {
 void GraphProcessor::create_line(const cv::Point&& start, const cv::Point&& end) noexcept {
     cv::line(m_image, start, end, cv::Scalar(80, 80, 80), 2, cv::LINE_4);
 }
+
 void GraphProcessor::create_circles() noexcept {
     for (const auto& i : m_all_nodes) {
         cv::circle(m_image, cv::Point(i.first, i.second), 3, cv::Scalar(80, 80, 80), -1, cv::LINE_AA);
