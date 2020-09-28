@@ -11,6 +11,9 @@
 
 
 
+constexpr bool DEBUG { false };
+
+
 template<typename T>
 struct KeyHasherPair {
     using dot_t                 = std::pair<int, int>;
@@ -39,15 +42,14 @@ public:
     static void s_mouse_callback(int event, int x, int y, int flags, void* param) noexcept;
     void connect_MST() noexcept;
     void process_realtime(const int x, const int y) noexcept;
+    void connect_nearest(const int x, const int y) noexcept;
     void static_process() noexcept;
-    void print_data() noexcept;
     int launch() noexcept;
 private:
+    void print_data() noexcept;
     void calculate_distances() noexcept;
-    void print_distances() noexcept;
-    void create_line(const cv::Point&& start, const cv::Point&& end) noexcept;
+    void create_line(const cv::Mat& image, const cv::Point&& start, const cv::Point&& end) noexcept;
     void create_circles() noexcept;
-    //totalDistances_t::iterator findBiggestDistance() noexcept;
     double find_max_distance() noexcept;
     void clean_entries() noexcept;
     cv::Mat m_image;
