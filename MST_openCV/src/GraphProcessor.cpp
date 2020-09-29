@@ -3,12 +3,10 @@
 #include <iostream>
 #include <unordered_map>
 #include <functional>
-#include <memory>
 #include <utility>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
-#include <opencv2/core.hpp>
 
 
 using distance_t            = double;
@@ -23,8 +21,6 @@ GraphProcessor::GraphProcessor(const int rows, const int columns, const std::str
         m_img_columns(columns),
         m_window_name(image_name),
         m_cnt_connections(1)
-        //mDistances(std::make_shared<std::unordered_map<NodeCoords, distance>>())
-        //mpImage(std::move(std::make_unique<cv::Mat>(mImgRows, mImgCols, CV_8UC3, cv::Scalar(0, 0, 0))))//idk why but it doesn't work
 {
     m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0));
     printf("Image size: [%d %d]\n", m_image.rows, m_image.cols);
@@ -63,10 +59,19 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
         graph_processor->process_realtime(x, y);
     }
     if (event == cv::EVENT_MOUSEMOVE) {
-        //graph_processor->process_mouse_moving(x, y);
         graph_processor->connect_nearest(x, y);
     }
 
+    /* For some reason it works for ubuntu 20.04 and doesn't work for windows.
+     * Works like: leave cursor on position and just scroll mousewheel up/down.
+     * For windows works EVENT_MOUSEWHEEL*/
+    if (event == cv::EVENT_MOUSEHWHEEL) {
+        if (cv::getMouseWheelDelta(flags) > 0) {
+            graph_processor->change_connectivity(0);
+        } else {
+            graph_processor->change_connectivity(1);
+        }
+    }
     if (event == cv::EVENT_MOUSEWHEEL) {
         printf("getMouseWheelDelta: %d\n", cv::getMouseWheelDelta(flags));
         if (cv::getMouseWheelDelta(flags) > 0) {        /*contains bug in ubuntu*/
@@ -246,7 +251,7 @@ void GraphProcessor::static_process() noexcept {
     connect_MST();
 }
 
-void GraphProcessor::change_connectivity(bool distination) noexcept {
+void GraphProcessor::change_connectivity(const bool distination) noexcept {
     if (distination) {
         if (m_all_nodes.size() > m_cnt_connections) {
             m_cnt_connections++;

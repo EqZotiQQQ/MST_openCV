@@ -1,0 +1,24 @@
+sudo apt-get update -y && sudo apt-get dist-upgrade -y
+
+Install dependencies: # probably last 4 doesn't work
+sudo apt-get install python-dev python3-dev libgphoto2-dev python3-numpy python-numpy libv4l-dev libv4l2rds0 libgtk-3-dev libgstreamer-plugins-base1.0-dev libgst-dev cmake-qt-gui build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libswscale-dev libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev libgstreamer-vaapi1.0-dev libavformat-dev libavformat-ffmpeg-dev -y
+
+download opencv
+https://github.com/opencv/opencv/releases
+download opencv extras
+https://github.com/opencv/opencv_contrib/releases
+
+`mkdir build` inside opencv folder
+`cd build`
+`cmake-gui`
+choose button `configure` unix makefiles
+button: `generate`
+find for `extra` and choose `contrib->modules` folder
+`cmake -jN`
+sudo make install
+
+then do it in ur cmake project:
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+target_link_libraries(proj_name ${OpenCV_LIBS})
+No need to do special configuration for CLion
