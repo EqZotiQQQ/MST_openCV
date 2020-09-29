@@ -40,6 +40,7 @@ public:
     void connect_MST() noexcept;
     void process_realtime(const int x, const int y) noexcept;
     void connect_nearest(const int x, const int y) noexcept;
+    void process_mouse_moving(const int x, const int y) noexcept;
     void static_process() noexcept;
     int launch() noexcept;
 private:

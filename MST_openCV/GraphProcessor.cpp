@@ -13,8 +13,8 @@
 
 using distance_t            = double;
 using dot_t                 = std::pair<int, int>;
-using dots_pair_t            = std::pair<dot_t, dot_t>;
-using total_distances_t      = std::unordered_map<dots_pair_t, distance_t, KeyHasherPair<dots_pair_t>>;
+using dots_pair_t           = std::pair<dot_t, dot_t>;
+using total_distances_t     = std::unordered_map<dots_pair_t, distance_t, KeyHasherPair<dots_pair_t>>;
 using nodes_t               = std::vector<dot_t>;
 
 
@@ -29,7 +29,7 @@ GraphProcessor::GraphProcessor(const int rows, const int columns, const std::str
     m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0));
     printf("Image size: [%d %d]\n", m_image.rows, m_image.cols);
     printf("Press esc button to exit.\n");
-    printf("scroll up/down to increase/reduce number of connections");
+    printf("scroll up/down to increase/reduce number of connections\n");
 }
 
 GraphProcessor::~GraphProcessor() noexcept {
@@ -41,6 +41,7 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
         graph_processor->process_realtime(x, y);
     }
     if (event == cv::EVENT_MOUSEMOVE) {
+        //graph_processor->process_mouse_moving(x, y);
         graph_processor->connect_nearest(x, y);
     }
     if (event == cv::EVENT_MOUSEWHEEL) {
@@ -52,17 +53,11 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
     }
 }
 
-void GraphProcessor::change_connectivity(bool distination) noexcept {
-    if (distination) {
-        if (m_all_nodes.size() > m_cnt_connections) {
-            m_cnt_connections++;
-        }
-    } else {
-        if(m_cnt_connections > 1) {
-            m_cnt_connections--;
-        }
-    }
+void GraphProcessor::process_mouse_moving(const int x, const int y) noexcept {
+
 }
+
+
 
 void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
     if(m_all_nodes.size() == 0) {
@@ -236,4 +231,17 @@ void GraphProcessor::static_process() noexcept {
     m_not_connected_nodes.reserve(m_all_nodes.size());
     calculate_distances();
     connect_MST();
+}
+
+void GraphProcessor::change_connectivity(bool distination) noexcept {
+    if (distination) {
+        if (m_all_nodes.size() > m_cnt_connections) {
+            m_cnt_connections++;
+        }
+    }
+    else {
+        if (m_cnt_connections > 1) {
+            m_cnt_connections--;
+        }
+    }
 }
