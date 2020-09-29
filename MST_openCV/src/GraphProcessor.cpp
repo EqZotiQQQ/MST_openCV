@@ -44,11 +44,12 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
         //graph_processor->process_mouse_moving(x, y);
         graph_processor->connect_nearest(x, y);
     }
+
     if (event == cv::EVENT_MOUSEWHEEL) {
         if (cv::getMouseWheelDelta(flags) > 0) {
-            graph_processor->change_connectivity(1);
-        } else {
             graph_processor->change_connectivity(0);
+        } else {
+            graph_processor->change_connectivity(1);
         }
     }
 }
