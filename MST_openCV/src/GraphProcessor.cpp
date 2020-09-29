@@ -1,4 +1,4 @@
-#include "GraphProcessor.h"
+#include "../headers/GraphProcessor.h"
 
 #include <iostream>
 #include <unordered_map>
@@ -35,6 +35,28 @@ GraphProcessor::GraphProcessor(const int rows, const int columns, const std::str
 GraphProcessor::~GraphProcessor() noexcept {
 }
 
+int GraphProcessor::launch() noexcept {
+    auto lunch_status{ true };
+    cv::namedWindow(m_window_name, cv::WINDOW_AUTOSIZE);
+    while (lunch_status) {
+        cv::imshow(m_window_name, m_image);
+        if (DEBUG == true) {
+            this->static_process();
+        }
+        cv::setMouseCallback(m_window_name, s_mouse_callback, this);
+
+        auto c = cv::waitKey(0);
+        if (c == 27) {
+            lunch_status = false;
+        }
+    }
+    return 0;
+}
+
+void callback_button(int state, void* userdata) {
+    std::cout << "okay" << std::endl;
+}
+
 void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* param) noexcept {    /*param - image*/
     auto graph_processor = static_cast<GraphProcessor*>(param);
     if (event == cv::EVENT_LBUTTONDOWN) {
@@ -46,7 +68,8 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
     }
 
     if (event == cv::EVENT_MOUSEWHEEL) {
-        if (cv::getMouseWheelDelta(flags) > 0) {
+        printf("getMouseWheelDelta: %d\n", cv::getMouseWheelDelta(flags));
+        if (cv::getMouseWheelDelta(flags) > 0) {        /*contains bug in ubuntu*/
             graph_processor->change_connectivity(0);
         } else {
             graph_processor->change_connectivity(1);
@@ -182,22 +205,7 @@ total_distances_t::const_iterator GraphProcessor::find_max_distance(const total_
     );
 }
 
-int GraphProcessor::launch() noexcept {
-    auto lunch_status{ true };
-    cv::namedWindow(m_window_name, cv::WINDOW_AUTOSIZE);
-    while (lunch_status) {
-        cv::imshow(m_window_name, m_image);
-        if (DEBUG == true) {
-            this->static_process();
-        }
-        cv::setMouseCallback(m_window_name, s_mouse_callback, this);
-        auto c = cv::waitKey(0);
-        if (c == 27) {
-            lunch_status = false;
-        }
-    }
-    return 0;
-}
+
 
 void GraphProcessor::print_data() noexcept {
     printf("Statistics\n");

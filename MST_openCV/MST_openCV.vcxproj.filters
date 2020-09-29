@@ -18,12 +18,12 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GraphProcessor.cpp">
+    <ClCompile Include="src/GraphProcessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GraphProcessor.h">
+    <ClInclude Include="headers/GraphProcessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

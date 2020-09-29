@@ -1,4 +1,4 @@
-#include "GraphProcessor.h"
+#include "headers/GraphProcessor.h"
 
 int main() {
     int ret = 0;
