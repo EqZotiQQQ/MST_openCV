@@ -22,7 +22,7 @@ GraphProcessor::GraphProcessor(const int rows, const int columns, const std::str
         m_img_columns(columns),
         m_window_name(image_name),
         m_cnt_connections(1),
-        m_run_type(RUN_TYPE::REAL_TIME),
+        m_run_type(RUN_TYPE::LATENCY_FLOW),
         //m_run_type(RUN_TYPE::LATENCY_FLOW),
         m_floating_node(FLOATING_MOUSE_NODE::OFF)
 {
@@ -43,11 +43,9 @@ int GraphProcessor::launch() noexcept {
         cv::imshow(m_window_name, m_image);
         if (m_run_type == RUN_TYPE::STATIC_DATA) {
             static_process();
-        }
-        else if (m_run_type == RUN_TYPE::REAL_TIME) {
+        } else if (m_run_type == RUN_TYPE::REAL_TIME) {
             cv::setMouseCallback(m_window_name, s_mouse_callback, this);
-        }
-        else if (m_run_type == RUN_TYPE::LATENCY_FLOW) {
+        } else if (m_run_type == RUN_TYPE::LATENCY_FLOW) {
             worker = std::thread([this] {this->latency_flow(); });
         }
         auto c = cv::waitKey(0);
@@ -59,20 +57,6 @@ int GraphProcessor::launch() noexcept {
         }
     }
     return 0;
-}
-
-void GraphProcessor::latency_flow() noexcept {
-    std::random_device rand_dev;
-    std::mt19937 gen(rand_dev());
-    std::uniform_int_distribution<> rand_rows(0, m_img_rows);
-    std::uniform_int_distribution<> rand_cols(0, m_img_columns);
-    while (true) {
-        m_all_nodes.emplace_back(std::make_pair(rand_rows(gen), rand_cols(gen)));
-        clean_entries();
-        calculate_distances();
-        connect_MST();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));//strange bug. doens't connect part of nodes.
-    }
 }
 
 void callback_button(int state, void* userdata) {
@@ -136,12 +120,6 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
 }
 
 
-void GraphProcessor::process_realtime(const int x, const int y) noexcept {
-    clean_entries();
-    m_all_nodes.emplace_back(std::make_pair(x, y));
-    calculate_distances();
-    connect_MST();
-}
 
 void GraphProcessor::clean_entries() noexcept {
     m_connected_nodes.clear();
@@ -170,10 +148,36 @@ void GraphProcessor::calculate_distances() noexcept {
     }
 }
 
+
+void GraphProcessor::process_realtime(const int x, const int y) noexcept {
+    clean_entries();
+    m_all_nodes.emplace_back(std::make_pair(x, y));
+    calculate_distances();
+    connect_MST();
+}
+
+void GraphProcessor::latency_flow() noexcept {
+    std::random_device rand_dev;
+    std::mt19937 gen(rand_dev());
+    std::uniform_int_distribution<> rand_rows(0, m_img_rows);
+    std::uniform_int_distribution<> rand_cols(0, m_img_columns);
+    int j = rand()%30+60;
+    int c = rand()%30+60;
+    while (true) {
+        clean_entries();
+        m_all_nodes.emplace_back(std::make_pair(rand_rows(gen), rand_cols(gen)));
+        calculate_distances();
+        connect_MST();
+        std::this_thread::sleep_for(std::chrono::milliseconds(80)); //strange bug. doens't connect part of nodes.
+    }
+}
+
 void GraphProcessor::connect_MST() noexcept {
     m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0));
     create_circles();
     if(m_all_nodes.size() < 2) {
+        m_connected_nodes.push_back(*(m_not_connected_nodes.begin()));
+        m_not_connected_nodes.erase(m_not_connected_nodes.begin());
         cv::imshow(m_window_name, m_image);
         return;
     }
@@ -201,11 +205,10 @@ void GraphProcessor::connect_MST() noexcept {
                     }
                 }
             }
+
             create_line(m_image, cv::Point(connected_node->first, connected_node->second), cv::Point(not_connected_node->first, not_connected_node->second));
             m_connected_nodes.push_back(*not_connected_node);
             m_not_connected_nodes.erase(not_connected_node);
-            //printf("connected:\t%d, not connected:\t%d\n", m_connected_nodes.size(), m_connected_nodes.size());
-            //printf("===========================\n");
         }
         cv::imshow(m_window_name, m_image);
     }
