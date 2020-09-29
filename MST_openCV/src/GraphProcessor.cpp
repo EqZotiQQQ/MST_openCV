@@ -125,6 +125,10 @@ void GraphProcessor::calculate_distances() noexcept {
 void GraphProcessor::connect_MST() noexcept {
     m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0));
     create_circles();
+    if(m_all_nodes.size() < 2) {
+        cv::imshow(m_window_name, m_image);
+        return;
+    }
     double max_dist = find_max_distance(m_distances)->second;
     while (m_not_connected_nodes.size() > 0) {
         if (m_connected_nodes.size() == 0) {
