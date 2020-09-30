@@ -97,7 +97,7 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
     total_distances_t nearest_dots;
     for (const auto& node : m_all_nodes) {
         double min_distance = 0;
-        auto distance = std::sqrt(std::pow(node.first - x, 2) + std::pow(node.second - y, 2));
+        double distance = std::sqrt(std::pow(node.first - x, 2) + std::pow(node.second - y, 2));
         if (min_distance == 0 || min_distance > distance) {
             min_distance = distance;
         }
@@ -117,9 +117,38 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
     cv::imshow(m_window_name, image);
 }
 
+[[noreturn]] void GraphProcessor::latency_flow() noexcept {
 
+    using clock_t = std::chrono::high_resolution_clock;
+    using second_t = std::chrono::duration<double, std::ratio<1> >;
+
+    std::random_device rand_dev;
+    std::mt19937 gen(rand_dev());
+    std::uniform_int_distribution<> rand_rows(0, m_img_columns);
+    std::uniform_int_distribution<> rand_cols(0, m_img_rows);
+    //int i = 0;
+    //double total_time = 0;
+    while (true) {
+        //std::chrono::time_point<clock_t> beg = clock_t::now();
+        clean_entries();
+        auto pair = std::make_pair(rand_rows(gen), rand_cols(gen));
+        if(contains(pair.first, pair.second)) {
+            continue;
+        }
+        m_all_nodes.push_back(pair);
+        create_circles();
+        calculate_distances();
+        connect_MST();
+        cv::imshow(m_window_name, m_image);
+        std::this_thread::sleep_for(std::chrono::milliseconds(0)); //strange bug. doens't connect part of nodes.
+        //printf("debug? %d\n", i++);
+        //printf("time = %f; total time = %f\n", std::chrono::duration_cast<second_t>(clock_t::now() - beg).count(),
+        //        total_time += std::chrono::duration_cast<second_t>(clock_t::now() - beg).count());
+    }
+}
 
 void GraphProcessor::clean_entries() noexcept {
+    m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0)); //prepare image for next tree.
     m_connected_nodes.clear();
     m_connected_nodes.reserve(m_all_nodes.size());
     m_not_connected_nodes.clear();
@@ -133,10 +162,9 @@ void GraphProcessor::calculate_distances() noexcept {
     if (m_all_nodes.size() > 1) {
         for (const dot_t& node_a : m_all_nodes) {
             for (const dot_t& node_b : m_all_nodes) {
-                auto f = m_distances.find(std::make_pair(std::make_pair(node_b.first, node_b.second), std::make_pair(node_a.first, node_a.second)));//.contains in c++20
-                if (node_a.first == node_b.second && node_a.second == node_b.first
-                    || f != m_distances.end()
-                    || node_a.first == node_b.first && node_a.second == node_b.second) {
+                bool contains = m_distances.contains(std::make_pair(std::make_pair(node_b.first, node_b.second), std::make_pair(node_a.first, node_a.second)));//.contains in c++20
+                bool same_node = (node_a.first == node_b.first) && (node_a.second == node_b.second);
+                if (same_node || contains) {
                     continue;
                 }
                 auto distance = std::sqrt(std::pow(node_b.first - node_a.first, 2) + std::pow(node_b.second - node_a.second, 2));
@@ -156,23 +184,7 @@ void GraphProcessor::process_realtime(const int x, const int y, const bool mouse
     }
 }
 
-[[noreturn]] void GraphProcessor::latency_flow() noexcept {
-    std::random_device rand_dev;
-    std::mt19937 gen(rand_dev());
-    std::uniform_int_distribution<> rand_rows(0, m_img_columns);
-    std::uniform_int_distribution<> rand_cols(0, m_img_rows);
-    while (true) {
-        clean_entries();
-        auto pair = std::make_pair(rand_rows(gen), rand_cols(gen));
-        if(contains(pair.first, pair.second)) {
-            continue;
-        }
-        m_all_nodes.push_back(pair);
-        calculate_distances();
-        connect_MST();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); //strange bug. doens't connect part of nodes.
-    }
-}
+
 
 bool GraphProcessor::contains(const int x, const int y) noexcept {
     for(const auto& item: m_all_nodes) {
@@ -185,12 +197,9 @@ bool GraphProcessor::contains(const int x, const int y) noexcept {
 }
 
 void GraphProcessor::connect_MST() noexcept {
-    m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0));
-    create_circles();
     if(m_all_nodes.size() < 2) {
         m_connected_nodes.push_back(*(m_not_connected_nodes.begin()));
         m_not_connected_nodes.erase(m_not_connected_nodes.begin());
-        cv::imshow(m_window_name, m_image);
         return;
     }
     double max_dist = find_max_distance(m_distances)->second;
@@ -217,11 +226,12 @@ void GraphProcessor::connect_MST() noexcept {
                     }
                 }
             }
-            create_line(m_image, cv::Point(connected_node->first, connected_node->second), cv::Point(not_connected_node->first, not_connected_node->second));
+            create_line(m_image,
+                    cv::Point(connected_node->first, connected_node->second),
+                     cv::Point(not_connected_node->first, not_connected_node->second));
             m_connected_nodes.push_back(*not_connected_node);
             m_not_connected_nodes.erase(not_connected_node);
         }
-        cv::imshow(m_window_name, m_image);
     }
 }
 
