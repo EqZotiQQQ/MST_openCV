@@ -59,10 +59,6 @@ int GraphProcessor::launch() noexcept {
     return 0;
 }
 
-void callback_button(int state, void* userdata) {
-    std::cout << "okay" << std::endl;
-}
-
 void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* param) noexcept {    /*param - image*/
     auto graph_processor = static_cast<GraphProcessor*>(param);
     if (event == cv::EVENT_LBUTTONDOWN) {
@@ -161,18 +157,32 @@ void GraphProcessor::process_realtime(const int x, const int y, const bool mouse
     }
 }
 
-void GraphProcessor::latency_flow() noexcept {
+[[noreturn]] void GraphProcessor::latency_flow() noexcept {
     std::random_device rand_dev;
     std::mt19937 gen(rand_dev());
     std::uniform_int_distribution<> rand_rows(0, m_img_columns);
     std::uniform_int_distribution<> rand_cols(0, m_img_rows);
     while (true) {
         clean_entries();
-        m_all_nodes.emplace_back(std::make_pair(rand_rows(gen), rand_cols(gen)));
+        auto pair = std::make_pair(rand_rows(gen), rand_cols(gen));
+        if(contains(pair.first, pair.second)) {
+            continue;
+        }
+        m_all_nodes.push_back(pair);
         calculate_distances();
         connect_MST();
-        std::this_thread::sleep_for(std::chrono::milliseconds(80)); //strange bug. doens't connect part of nodes.
+        std::this_thread::sleep_for(std::chrono::milliseconds(0)); //strange bug. doens't connect part of nodes.
     }
+}
+
+bool GraphProcessor::contains(const int x, const int y) noexcept {
+    for(const auto& item: m_all_nodes) {
+        if(item.first == x and item.second == y or
+                item.first == y and item.second == x) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void GraphProcessor::connect_MST() noexcept {
@@ -201,19 +211,43 @@ void GraphProcessor::connect_MST() noexcept {
                     } else {
                         current_pair_distance = m_distances.find(std::make_pair(*not_connected, *connected));
                     }
-                    if (min_distance >= current_pair_distance->second) {
+                    if (min_distance >= current_pair_distance->second) {    //zdes padaet
                         min_distance = current_pair_distance->second;
                         connected_node = connected;
                         not_connected_node = not_connected;
                     }
                 }
             }
-
             create_line(m_image, cv::Point(connected_node->first, connected_node->second), cv::Point(not_connected_node->first, not_connected_node->second));
             m_connected_nodes.push_back(*not_connected_node);
             m_not_connected_nodes.erase(not_connected_node);
         }
         cv::imshow(m_window_name, m_image);
+    }
+}
+
+void GraphProcessor::print_connected() noexcept {
+    printf("contain %d m_connected_nodes", m_connected_nodes.size());
+    for (const auto& item: m_connected_nodes) {
+        printf("Node: [%d %d]\n", item.second, item.first);
+    }
+}
+void GraphProcessor::print_not_connected() noexcept {
+    printf("contain %d m_not_connected_nodes", m_not_connected_nodes.size());
+    for (const auto& item: m_not_connected_nodes) {
+        printf("Node: [%d %d]\n", item.second, item.first);
+    }
+}
+void GraphProcessor::print_all_nodes() noexcept {
+    printf("contain %d m_all_nodes", m_distances.size());
+    for (const auto& item: m_all_nodes) {
+        printf("Node: [%d %d]\n", item.second, item.first);
+    }
+}
+void GraphProcessor::print_distances() noexcept {
+    printf("contain %d distances", m_distances.size());
+    for (const auto& item: m_distances) {
+        printf("Pair: [%d %d] and [%d %d] distance = %f\n", item.first.first.first, item.first.first.second, item.first.second.first, item.first.second.second, item.second);
     }
 }
 
@@ -243,7 +277,7 @@ total_distances_t::const_iterator GraphProcessor::find_max_distance(const total_
 
 void GraphProcessor::print_data() noexcept {
     printf("Statistics\n");
-    printf("Count of nodes: %I64u\n", m_all_nodes.size());
+    printf("Count of nodes: %I64lu\n", m_all_nodes.size());
     printf("List of nodes:\n");
     for (const auto& i : m_all_nodes) {
         printf("[%d %d]\t", i.first, i.second);

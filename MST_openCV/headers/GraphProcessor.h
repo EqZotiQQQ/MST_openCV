@@ -10,7 +10,6 @@ enum class RUN_TYPE {
     REAL_TIME = 0,
     LATENCY_FLOW = 1,
     STATIC_DATA = 2
-    /**/
 };
 
 enum class FLOATING_MOUSE_NODE {
@@ -40,23 +39,30 @@ public:
     using total_distances_t     = std::unordered_map<dots_pair_t, distance_t, KeyHasherPair<dots_pair_t>>;
     using nodes_t               = std::vector<dot_t>;
 
-    GraphProcessor(RUN_TYPE rt, FLOATING_MOUSE_NODE fmn, const int rows = 1000, const int columns = 1800, const std::string image_name = "image") noexcept;
+    GraphProcessor(RUN_TYPE rt, FLOATING_MOUSE_NODE fmn, const int rows = 5, const int columns = 10, const std::string image_name = "image") noexcept;
     ~GraphProcessor() noexcept;
+    int launch() noexcept;
+private:
     void change_connectivity(bool distination) noexcept;
     void process_realtime(const int x, const int y, const bool mouse_call = false) noexcept;
     void connect_nearest(const int x, const int y) noexcept;
-    int launch() noexcept;
-private:
     void print_data() noexcept;
     void connect_MST() noexcept;
     void static_process() noexcept;
-    void latency_flow() noexcept;
+
+    [[noreturn]] void latency_flow() noexcept;
     void calculate_distances() noexcept;
     void create_line(const cv::Mat& image, const cv::Point&& start, const cv::Point&& end) noexcept;
     void create_circles() noexcept;
     static void s_mouse_callback(int event, int x, int y, int flags, void* param) noexcept;
     static total_distances_t::const_iterator find_max_distance(const total_distances_t& container) noexcept;
     void clean_entries() noexcept;
+    void print_connected() noexcept;
+    void print_not_connected() noexcept;
+    void print_all_nodes() noexcept;
+    void print_distances() noexcept;
+    bool contains(const int x, const int y) noexcept;
+
     cv::Mat m_image;
     std::string m_window_name;
     nodes_t m_all_nodes;
@@ -69,41 +75,5 @@ private:
     const int m_img_columns;
     int m_cnt_connections;
 };
-/*
-class Storage {
-public:
-    Storage() : m_threshold(1) {}
 
-    bool push_queue(const dotsPair_t&& element) {
-        if (m_storage.size() < m_threshold) {
-            m_storage.push_back(element);
-        } else {
-            double max_distance = 0;
-            for (auto iterator = m_storage.cbegin(); iterator != m_storage.cend(); ++iterator) {
-                if()
-            }
-        }
-        return true;
-    }
-
-    bool pop_queue() {
-        if (m_storage.size() == 0) {
-            return false;
-        }
-        return true;
-    }
-
-    int operator++() {
-        return m_threshold++;
-    }
-
-    int operator--() {
-        return m_threshold--;
-    }
-
-private:
-    std::vector<dotsPair_t> m_storage;
-    int m_threshold;
-};
-*/
 #endif
