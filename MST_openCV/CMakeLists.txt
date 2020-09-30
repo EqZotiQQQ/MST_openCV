@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 project(MST_openCV)
 
 set(CMAKE_CXX_STANDARD 20)
+
 find_package(OpenCV REQUIRED)
+find_package(Threads REQUIRED)
+
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 set(HEADERS
@@ -21,4 +24,4 @@ include_directories(
 
 add_executable(MST_openCV ${SOURCES} ${HEADERS})
 
-target_link_libraries( MST_openCV ${OpenCV_LIBS} )
+target_link_libraries( MST_openCV ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT} )

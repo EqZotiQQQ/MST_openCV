@@ -159,10 +159,8 @@ void GraphProcessor::process_realtime(const int x, const int y) noexcept {
 void GraphProcessor::latency_flow() noexcept {
     std::random_device rand_dev;
     std::mt19937 gen(rand_dev());
-    std::uniform_int_distribution<> rand_rows(0, m_img_rows);
-    std::uniform_int_distribution<> rand_cols(0, m_img_columns);
-    int j = rand()%30+60;
-    int c = rand()%30+60;
+    std::uniform_int_distribution<> rand_rows(0, m_img_columns);
+    std::uniform_int_distribution<> rand_cols(0, m_img_rows);
     while (true) {
         clean_entries();
         m_all_nodes.emplace_back(std::make_pair(rand_rows(gen), rand_cols(gen)));
@@ -222,6 +220,8 @@ void GraphProcessor::create_circles() noexcept {
     for (const auto& i : m_all_nodes) {
         cv::circle(m_image, cv::Point(i.first, i.second), 3, cv::Scalar(120, 250, 120), -1, cv::LINE_AA);
     }
+    cv::circle(m_image, cv::Point(m_all_nodes.back().first, m_all_nodes.back().second), 3, cv::Scalar(0, 0, 250), -1, cv::LINE_AA);
+
 }
 
 total_distances_t::const_iterator GraphProcessor::find_max_distance(const total_distances_t& container) noexcept {

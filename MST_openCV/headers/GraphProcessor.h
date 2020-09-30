@@ -20,7 +20,7 @@ enum class FLOATING_MOUSE_NODE {
 
 template<typename T>
 struct KeyHasherPair {
-    using dot_t                 = std::pair<int, int>;
+    using dot_t                  = std::pair<int, int>;
     using dots_pair_t            = std::pair<dot_t, dot_t>;
     std::size_t operator()(const dots_pair_t& k) const {
         using std::hash;
@@ -40,7 +40,7 @@ public:
     using total_distances_t     = std::unordered_map<dots_pair_t, distance_t, KeyHasherPair<dots_pair_t>>;
     using nodes_t               = std::vector<dot_t>;
 
-    GraphProcessor(const int rows = 800, const int columns = 800, const std::string image_name = "image") noexcept;
+    GraphProcessor(const int rows = 1000, const int columns = 1800, const std::string image_name = "image") noexcept;
     ~GraphProcessor() noexcept;
     void change_connectivity(bool distination) noexcept;
     void process_realtime(const int x, const int y) noexcept;
