@@ -22,9 +22,9 @@ GraphProcessor::GraphProcessor(const int rows, const int columns, const std::str
         m_img_columns(columns),
         m_window_name(image_name),
         m_cnt_connections(1),
-        m_run_type(RUN_TYPE::LATENCY_FLOW),
+        m_run_type(RUN_TYPE::REAL_TIME),
         //m_run_type(RUN_TYPE::LATENCY_FLOW),
-        m_floating_node(FLOATING_MOUSE_NODE::OFF)
+        m_floating_node(FLOATING_MOUSE_NODE::ON)
 {
     m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0));
     printf("Image size: [%d %d]\n", m_image.rows, m_image.cols);
@@ -69,7 +69,11 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
         graph_processor->process_realtime(x, y);
     }
     if (event == cv::EVENT_MOUSEMOVE) {
-        graph_processor->connect_nearest(x, y);
+        if (graph_processor->m_floating_node == FLOATING_MOUSE_NODE::ON) {
+            graph_processor->process_realtime(x, y, true);
+        } else {
+            graph_processor->connect_nearest(x, y);
+        }
     }
 
     /* For some reason it works for ubuntu 20.04 and doesn't work for windows.
@@ -149,11 +153,14 @@ void GraphProcessor::calculate_distances() noexcept {
 }
 
 
-void GraphProcessor::process_realtime(const int x, const int y) noexcept {
+void GraphProcessor::process_realtime(const int x, const int y, const bool mouse_call) noexcept {
     clean_entries();
     m_all_nodes.emplace_back(std::make_pair(x, y));
     calculate_distances();
     connect_MST();
+    if (mouse_call) {
+        m_all_nodes.pop_back();
+    }
 }
 
 void GraphProcessor::latency_flow() noexcept {

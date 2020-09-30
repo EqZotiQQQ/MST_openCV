@@ -43,7 +43,7 @@ public:
     GraphProcessor(const int rows = 1000, const int columns = 1800, const std::string image_name = "image") noexcept;
     ~GraphProcessor() noexcept;
     void change_connectivity(bool distination) noexcept;
-    void process_realtime(const int x, const int y) noexcept;
+    void process_realtime(const int x, const int y, const bool mouse_call = false) noexcept;
     void connect_nearest(const int x, const int y) noexcept;
     int launch() noexcept;
 private:
