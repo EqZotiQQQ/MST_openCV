@@ -131,8 +131,8 @@ void GraphProcessor::calculate_distances() noexcept {
         m_not_connected_nodes.push_back(node);
     }
     if (m_all_nodes.size() > 1) {
-        for (const auto& node_a : m_all_nodes) {
-            for (const auto& node_b : m_all_nodes) {
+        for (const dot_t& node_a : m_all_nodes) {
+            for (const dot_t& node_b : m_all_nodes) {
                 auto f = m_distances.find(std::make_pair(std::make_pair(node_b.first, node_b.second), std::make_pair(node_a.first, node_a.second)));//.contains in c++20
                 if (node_a.first == node_b.second && node_a.second == node_b.first
                     || f != m_distances.end()
@@ -145,7 +145,6 @@ void GraphProcessor::calculate_distances() noexcept {
         }
     }
 }
-
 
 void GraphProcessor::process_realtime(const int x, const int y, const bool mouse_call) noexcept {
     clean_entries();
@@ -171,7 +170,7 @@ void GraphProcessor::process_realtime(const int x, const int y, const bool mouse
         m_all_nodes.push_back(pair);
         calculate_distances();
         connect_MST();
-        std::this_thread::sleep_for(std::chrono::milliseconds(0)); //strange bug. doens't connect part of nodes.
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); //strange bug. doens't connect part of nodes.
     }
 }
 

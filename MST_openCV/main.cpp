@@ -5,7 +5,7 @@
 #include "headers/GraphProcessor.h"
 
 int main(int argc, char* argv[]) {
-    enum RUN_TYPE rt = RUN_TYPE::REAL_TIME;
+    enum RUN_TYPE rt = RUN_TYPE::LATENCY_FLOW;
     enum FLOATING_MOUSE_NODE mouse_mod = FLOATING_MOUSE_NODE::OFF;
     int h = 320;
     int w = 480;
