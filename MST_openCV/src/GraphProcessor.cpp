@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <functional>
 #include <utility>
+#include <thread>
 #include <random>
 
 #include <opencv2/opencv.hpp>
@@ -17,14 +18,13 @@ using total_distances_t     = std::unordered_map<dots_pair_t, distance_t, KeyHas
 using nodes_t               = std::vector<dot_t>;
 
 
-GraphProcessor::GraphProcessor(const int rows, const int columns, const std::string image_name) noexcept:
+GraphProcessor::GraphProcessor(RUN_TYPE rt, FLOATING_MOUSE_NODE fmn, const int rows, const int columns, const std::string image_name) noexcept:
         m_img_rows(rows),
         m_img_columns(columns),
         m_window_name(image_name),
         m_cnt_connections(1),
-        m_run_type(RUN_TYPE::REAL_TIME),
-        //m_run_type(RUN_TYPE::LATENCY_FLOW),
-        m_floating_node(FLOATING_MOUSE_NODE::ON)
+        m_run_type(rt),
+        m_floating_node(fmn)
 {
     m_image = cv::Mat(m_img_rows, m_img_columns, CV_8UC3, cv::Scalar(0, 0, 0));
     printf("Image size: [%d %d]\n", m_image.rows, m_image.cols);
@@ -76,9 +76,7 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
         }
     }
 
-    /* For some reason it works for ubuntu 20.04 and doesn't work for windows.
-     * Works like: leave cursor on position and just scroll mousewheel up/down.
-     * For windows works EVENT_MOUSEWHEEL*/
+
     if (event == cv::EVENT_MOUSEHWHEEL) {
         if (cv::getMouseWheelDelta(flags) > 0) {
             graph_processor->change_connectivity(0);
