@@ -119,8 +119,8 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
 
 [[noreturn]] void GraphProcessor::latency_flow() noexcept {
 
-    using clock_t = std::chrono::high_resolution_clock;
-    using second_t = std::chrono::duration<double, std::ratio<1> >;
+    //using clock_t = std::chrono::high_resolution_clock;
+    //using second_t = std::chrono::duration<double, std::ratio<1> >;
 
     std::random_device rand_dev;
     std::mt19937 gen(rand_dev());
@@ -139,7 +139,7 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
         create_circles();
         calculate_distances();
         connect_MST();
-        cv::imshow(m_window_name, m_image);
+        cv::imshow(m_window_name, m_image);     // doesn't work after 30 iterations. Dunno why
         std::this_thread::sleep_for(std::chrono::milliseconds(0)); //strange bug. doens't connect part of nodes.
         //printf("debug? %d\n", i++);
         //printf("time = %f; total time = %f\n", std::chrono::duration_cast<second_t>(clock_t::now() - beg).count(),
@@ -159,18 +159,33 @@ void GraphProcessor::calculate_distances() noexcept {
     for (const auto& node : m_all_nodes) {
         m_not_connected_nodes.push_back(node);
     }
-    if (m_all_nodes.size() > 1) {
-        for (const dot_t& node_a : m_all_nodes) {
-            for (const dot_t& node_b : m_all_nodes) {
-                bool contains = m_distances.contains(std::make_pair(std::make_pair(node_b.first, node_b.second), std::make_pair(node_a.first, node_a.second)));//.contains in c++20
-                bool same_node = (node_a.first == node_b.first) && (node_a.second == node_b.second);
-                if (same_node || contains) {
-                    continue;
-                }
-                auto distance = std::sqrt(std::pow(node_b.first - node_a.first, 2) + std::pow(node_b.second - node_a.second, 2));
-                m_distances.emplace(std::make_pair(std::make_pair(node_a.first, node_a.second), std::make_pair(node_b.first, node_b.second)), distance);
+    if (m_all_nodes.size() == 1) {
+        return;
+    }
+    /*for (auto node_a = m_all_nodes.cbegin(); node_a != m_all_nodes.cend(); ++node_a) {    //little bit better then prev shit
+        for (auto node_b = node_a; node_b != m_all_nodes.cend(); ++node_b) {
+            bool contains = m_distances.contains(
+                    std::make_pair(std::make_pair(node_b->first, node_b->second),
+                                   std::make_pair(node_a->first, node_a->second)));       //.contains in c++20
+            if (contains) {
+                continue;
             }
+            auto distance = std::sqrt(std::pow(node_b->first - node_a->first, 2) + std::pow(node_b->second - node_a->second, 2));
+            m_distances.emplace(std::make_pair(std::make_pair(node_a->first, node_a->second), std::make_pair(node_b->first, node_b->second)), distance);
         }
+    }*/
+
+    auto last_node = m_all_nodes.cend() - 1;
+    for (auto node = m_all_nodes.cbegin(); node != m_all_nodes.cend() - 1; ++node) {
+        /*bool contains = m_distances.contains( //doesn't contain repeated nodes
+                std::make_pair(std::make_pair(last_node->first, last_node->second),
+                               std::make_pair(node->first, node->second)));       //.contains in c++20
+        if (contains) {
+            std::cout << "contains!!!" << std::endl;
+            continue;
+        }*/
+        auto distance = std::sqrt(std::pow(last_node->first - node->first, 2) + std::pow(last_node->second - node->second, 2));
+        m_distances.emplace(std::make_pair(std::make_pair(last_node->first, last_node->second), std::make_pair(node->first, node->second)), distance);
     }
 }
 
@@ -273,13 +288,22 @@ void GraphProcessor::create_circles() noexcept {
 }
 
 total_distances_t::const_iterator GraphProcessor::find_max_distance(const total_distances_t& container) noexcept {
-    return std::max_element
+    double max_dist = 0;
+    total_distances_t::const_iterator ret_iterator = container.begin();
+    for (auto i = container.begin(); i != container.end(); ++i) {
+        if(i->second > max_dist) {
+            max_dist = i->second;
+            ret_iterator = i;
+        }
+    }
+    return ret_iterator;
+    /*return std::max_element
     (
         std::begin(container), std::end(container),
         [](const auto & lhs, const auto & rhs) {
             return lhs.second < rhs.second;
         }
-    );
+    );*/
 }
 
 
