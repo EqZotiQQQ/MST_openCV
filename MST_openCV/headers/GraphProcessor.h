@@ -6,13 +6,13 @@
 #include <unordered_map>
 #include <utility>
 
-enum class RUN_TYPE {
+enum RUN_TYPE {
     REAL_TIME = 0,
     LATENCY_FLOW = 1,
     STATIC_DATA = 2
 };
 
-enum class FLOATING_MOUSE_NODE {
+enum FLOATING_MOUSE_NODE {
     OFF = 0,
     ON = 1,
     NEAREST_NODE = 2
@@ -40,7 +40,8 @@ public:
     using total_distances_t     = std::unordered_map<dots_pair_t, distance_t, KeyHasherPair<dots_pair_t>>;
     using nodes_t               = std::vector<dot_t>;
 
-    GraphProcessor(RUN_TYPE rt, FLOATING_MOUSE_NODE fmn, const int rows = 320, const int columns = 480, const std::string image_name = "image") noexcept;
+    GraphProcessor(const int rows = 320, const int columns = 480, const std::string& image_name = "image") noexcept;
+    void set_options(const FLOATING_MOUSE_NODE mouse, const RUN_TYPE run_type) noexcept;
     ~GraphProcessor() noexcept;
     int launch() noexcept;
 private:

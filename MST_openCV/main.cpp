@@ -14,48 +14,53 @@ int main(int argc, char* argv[]) {
     int h = 150;
     int w = 350;
 #ifdef __linux__
-    int rez=0;
-    while((rez = getopt(argc,argv,"r:f:h:w:")) != -1) {
+    int rez = 0;
+    while ((rez = getopt(argc, argv, "r:f:h:w:")) != -1) {
         switch (rez) {
-            case 'r': {
-                if (std::string(optarg) == "0") {
-                    rt = RUN_TYPE::REAL_TIME;
-                } else if (std::string(optarg) == "1") {
-                    rt = RUN_TYPE::LATENCY_FLOW;
-                } else if (std::string(optarg) == "2") {
-                    rt = RUN_TYPE::STATIC_DATA;
-                } else {
-                    print_help();
-                }
-                break;
+        case 'r': {
+            if (std::string(optarg) == "0") {
+                rt = RUN_TYPE::REAL_TIME;
             }
-            case 'f': {
-                if (std::string(optarg) == "0") {
-                    mouse_mod = FLOATING_MOUSE_NODE::OFF; 
-                } else if (std::string(optarg) == "1") {
-                    mouse_mod = FLOATING_MOUSE_NODE::ON;
-                } else {
-                    print_help();
-                }
-                break;
+            else if (std::string(optarg) == "1") {
+                rt = RUN_TYPE::LATENCY_FLOW;
             }
-            case 'h': {
-                h = stoi(std::string(optarg));
-                break;
+            else if (std::string(optarg) == "2") {
+                rt = RUN_TYPE::STATIC_DATA;
             }
-            case 'w': {
-                w = stoi(std::string(optarg));
-                break;
-            }
-            default: {
+            else {
                 print_help();
-                break;
             }
+            break;
+        }
+        case 'f': {
+            if (std::string(optarg) == "0") {
+                mouse_mod = FLOATING_MOUSE_NODE::OFF;
+            }
+            else if (std::string(optarg) == "1") {
+                mouse_mod = FLOATING_MOUSE_NODE::ON;
+            }
+            else {
+                print_help();
+            }
+            break;
+        }
+        case 'h': {
+            h = stoi(std::string(optarg));
+            break;
+        }
+        case 'w': {
+            w = stoi(std::string(optarg));
+            break;
+        }
+        default: {
+            print_help();
+            break;
+        }
         }
     }
 #elif _WIN32
     std::vector<std::string> arguments;
-    if(argc > 1) {
+    if (argc > 1) {
         arguments.reserve(argc - 1);
         for (int i = 1; i < argc; ++i) {
             arguments.push_back(std::string(argv[i]));
@@ -66,52 +71,60 @@ int main(int argc, char* argv[]) {
             }
             const char key = *arguments[i].substr(1, 2).c_str();
             switch (key) {
-                case 'r': {
-                    std::string key_value_s = arguments[i].substr(2, 3);
-                    if (key_value_s == "0") {
-                        rt = RUN_TYPE::REAL_TIME;
-                    } else if (key_value_s == "1") {
-                        rt = RUN_TYPE::LATENCY_FLOW;
-                    } else if (key_value_s == "2") {
-                        rt = RUN_TYPE::STATIC_DATA;
-                    } else {
-                        print_help();
-                    }
-                    break;
+            case 'r': {
+                std::string key_value_s = arguments[i].substr(2, 3);
+                if (key_value_s == "0") {
+                    rt = RUN_TYPE::REAL_TIME;
                 }
-                case 'f': {
-                    std::string key_value_s = arguments[i].substr(2, 3);
-                    if (key_value_s == "0") {
-                        mouse_mod = FLOATING_MOUSE_NODE::OFF;
-                    } else if (key_value_s == "1") {
-                        mouse_mod = FLOATING_MOUSE_NODE::ON;
-                    }else if (key_value_s == "2") {
-                        mouse_mod = FLOATING_MOUSE_NODE::NEAREST_NODE;
-                    } else {
-                        print_help();
-                    }
-                    break;
+                else if (key_value_s == "1") {
+                    rt = RUN_TYPE::LATENCY_FLOW;
                 }
-                case 'h': {
-                    std::string key_value_s = arguments[i].substr(2, arguments[i].size() - 1);
-                    h = stoi(key_value_s);
-                    break;
+                else if (key_value_s == "2") {
+                    rt = RUN_TYPE::STATIC_DATA;
                 }
-                case 'w': {
-                    std::string key_value_s = arguments[i].substr(2, arguments[i].size() - 1);
-                    w = stoi(key_value_s);
-                    break;
-                }
-                default: {
+                else {
                     print_help();
-                    break;
                 }
+                break;
+            }
+            case 'f': {
+                std::string key_value_s = arguments[i].substr(2, 3);
+                if (key_value_s == "0") {
+                    mouse_mod = FLOATING_MOUSE_NODE::OFF;
+                }
+                else if (key_value_s == "1") {
+                    mouse_mod = FLOATING_MOUSE_NODE::ON;
+                }
+                else if (key_value_s == "2") {
+                    mouse_mod = FLOATING_MOUSE_NODE::NEAREST_NODE;
+                }
+                else {
+                    print_help();
+                }
+                break;
+            }
+            case 'h': {
+                std::string key_value_s = arguments[i].substr(2, arguments[i].size() - 1);
+                h = stoi(key_value_s);
+                break;
+            }
+            case 'w': {
+                std::string key_value_s = arguments[i].substr(2, arguments[i].size() - 1);
+                w = stoi(key_value_s);
+                break;
+            }
+            default: {
+                print_help();
+                break;
+            }
             }
         }
     }
 #endif
     int ret = 0;
-    GraphProcessor gp { rt, mouse_mod, h, w };
+    GraphProcessor gp;
+    gp.set_options(mouse_mod, rt);
+
     ret = gp.launch();
     return ret;
 }
