@@ -14,7 +14,8 @@ enum class RUN_TYPE {
 
 enum class FLOATING_MOUSE_NODE {
     OFF = 0,
-    ON = 1
+    ON = 1,
+    NEAREST_NODE = 2
 };
 
 template<typename T>

@@ -42,8 +42,8 @@ int GraphProcessor::launch() noexcept {
     std::thread worker;
     auto lunch_status{ true };
     cv::namedWindow(m_window_name, cv::WINDOW_AUTOSIZE);
+    cv::imshow(m_window_name, m_image);
     while (lunch_status) {
-        cv::imshow(m_window_name, m_image);
         if (m_run_type == RUN_TYPE::STATIC_DATA) {
             static_process();
         } else if (m_run_type == RUN_TYPE::REAL_TIME) {
@@ -70,28 +70,29 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
     if (event == cv::EVENT_MOUSEMOVE) {
         if (graph_processor->m_floating_node == FLOATING_MOUSE_NODE::ON) {
             graph_processor->process_realtime(x, y, true);
-        } else {
+        } else if (graph_processor->m_floating_node == FLOATING_MOUSE_NODE::NEAREST_NODE) {
             graph_processor->connect_nearest(x, y);
         }
     }
-
+    if (graph_processor->m_floating_node == FLOATING_MOUSE_NODE::NEAREST_NODE) {
 #ifdef __linux__ 
-    if (event == cv::EVENT_MOUSEHWHEEL) {
-        if (cv::getMouseWheelDelta(flags) > 0) {
-            graph_processor->change_connectivity(0);
-        } else {
-            graph_processor->change_connectivity(1);
+        if (event == cv::EVENT_MOUSEHWHEEL) {
+            if (cv::getMouseWheelDelta(flags) > 0) {
+                graph_processor->change_connectivity(0);
+            } else {
+                graph_processor->change_connectivity(1);
+            }
         }
-    }
 #elif _WIN32
-    if (event == cv::EVENT_MOUSEWHEEL) {
-        if (cv::getMouseWheelDelta(flags) > 0) {        /*contains bug in ubuntu*/
-            graph_processor->change_connectivity(0);
-        } else {
-            graph_processor->change_connectivity(1);
+        if (event == cv::EVENT_MOUSEWHEEL) {
+            if (cv::getMouseWheelDelta(flags) > 0) {        /*contains bug in ubuntu*/
+                graph_processor->change_connectivity(0);
+            } else {
+                graph_processor->change_connectivity(1);
+            }
         }
-    }
 #endif
+    }
 }
 
 void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
@@ -99,25 +100,38 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
         return;
     }
     cv::Mat image = m_image.clone();
-    total_distances_t nearest_dots;
-    for (const auto& node : m_all_nodes) {
-        double min_distance = 0;
-        double distance = std::sqrt(std::pow(node.first - x, 2) + std::pow(node.second - y, 2));
-        if (min_distance == 0 || min_distance > distance) {
-            min_distance = distance;
-        }
-        if (m_cnt_connections > nearest_dots.size()) {
-            nearest_dots.emplace(std::make_pair(std::make_pair(node.first, node.second), std::make_pair(x, y)), distance);
-        } else {
-            auto max_remouted_pair = find_max_distance(nearest_dots);
-            if(max_remouted_pair->second > min_distance) {
-                nearest_dots.erase(max_remouted_pair);
-                nearest_dots.emplace(std::make_pair(std::make_pair(node.first, node.second), std::make_pair(x, y)), distance);
+    if (m_cnt_connections == 1) {
+        nodes_t::const_iterator element = m_all_nodes.cbegin();
+        double min_distance = -1;
+        for (auto node = m_all_nodes.cbegin(); node != m_all_nodes.cend(); ++node) {
+            double distance_to_node = std::sqrt(std::pow(node->first - x, 2) + std::pow(node->second - y, 2));
+            if (min_distance > distance_to_node || min_distance) {
+                min_distance = distance_to_node;
+                element = node;
             }
         }
-    }
-    for (const auto& dot : nearest_dots) {
-        create_line(image, cv::Point(dot.first.first.first, dot.first.first.second), cv::Point(x, y));
+        create_line(image, cv::Point(element->first, element->second), cv::Point(x, y));
+    } else {
+        total_distances_t nearest_dots;
+        for (const auto& node : m_all_nodes) {
+            double min_distance = 0;
+            double distance = std::sqrt(std::pow(node.first - x, 2) + std::pow(node.second - y, 2));
+            if (min_distance == 0 || min_distance > distance) {
+                min_distance = distance;
+            }
+            if (m_cnt_connections > nearest_dots.size()) {
+                nearest_dots.emplace(std::make_pair(std::make_pair(node.first, node.second), std::make_pair(x, y)), distance);
+            } else {
+                auto max_remouted_pair = find_max_distance(nearest_dots);
+                if(max_remouted_pair->second > min_distance) {
+                    nearest_dots.erase(max_remouted_pair);
+                    nearest_dots.emplace(std::make_pair(std::make_pair(node.first, node.second), std::make_pair(x, y)), distance);
+                }
+            }
+        }
+        for (const auto& dot : nearest_dots) {
+            create_line(image, cv::Point(dot.first.first.first, dot.first.first.second), cv::Point(x, y));
+        }
     }
     cv::imshow(m_window_name, image);
 }
@@ -160,8 +174,9 @@ void GraphProcessor::clean_entries() noexcept {
 
 void GraphProcessor::calculate_distances() noexcept {
     create_circles();
-    for (const auto& node : m_all_nodes) {
-        m_not_connected_nodes.push_back(node);
+    //for (const auto& node : m_all_nodes) {
+    for (auto node = m_all_nodes.cbegin(); node != m_all_nodes.cend(); ++node) {
+        m_not_connected_nodes.emplace_back(*node);
     }
     if (m_all_nodes.size() == 1) {
         return;
