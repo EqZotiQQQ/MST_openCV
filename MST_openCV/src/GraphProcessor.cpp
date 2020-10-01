@@ -38,7 +38,6 @@ GraphProcessor::~GraphProcessor() noexcept {
 void GraphProcessor::set_options(const FLOATING_MOUSE_NODE mouse, const RUN_TYPE run_type) noexcept {
     m_floating_node = mouse;
     m_run_type = run_type;
-    printf("set with opt\n");
 }
 
 int GraphProcessor::launch() noexcept {
@@ -92,7 +91,7 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
         }
 #elif _WIN32
         if (event == cv::EVENT_MOUSEWHEEL) {
-            if (cv::getMouseWheelDelta(flags) > 0) {        /*contains bug in ubuntu*/
+            if (cv::getMouseWheelDelta(flags) > 0) {
                 graph_processor->change_connectivity(0);
             }
             else {
@@ -184,7 +183,6 @@ void GraphProcessor::clean_entries() noexcept {
 
 void GraphProcessor::calculate_distances() noexcept {
     create_circles();
-    //for (const auto& node : m_all_nodes) {
     for (auto node = m_all_nodes.cbegin(); node != m_all_nodes.cend(); ++node) {
         m_not_connected_nodes.emplace_back(*node);
     }
