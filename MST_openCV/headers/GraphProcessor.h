@@ -39,7 +39,7 @@ public:
     using total_distances_t     = std::unordered_map<dots_pair_t, distance_t, KeyHasherPair<dots_pair_t>>;
     using nodes_t               = std::vector<dot_t>;
 
-    GraphProcessor(RUN_TYPE rt, FLOATING_MOUSE_NODE fmn, const int rows = 5, const int columns = 10, const std::string image_name = "image") noexcept;
+    GraphProcessor(RUN_TYPE rt, FLOATING_MOUSE_NODE fmn, const int rows = 320, const int columns = 480, const std::string image_name = "image") noexcept;
     ~GraphProcessor() noexcept;
     int launch() noexcept;
 private:
