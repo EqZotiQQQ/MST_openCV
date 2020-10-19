@@ -118,23 +118,22 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
             }
         }
         create_line(image, cv::Point(element->first, element->second), cv::Point(x, y));
-    }
-    else {
+    } else {
         total_distances_t nearest_dots;
-        for (const auto& node : m_all_nodes) {
+        for (const auto& [cx, cy] : m_all_nodes) {
             double min_distance = 0;
-            double distance = std::sqrt(std::pow(node.first - x, 2) + std::pow(node.second - y, 2));
+            double distance = std::sqrt(std::pow(cx - x, 2) + std::pow(cy - y, 2));
             if (min_distance == 0 || min_distance > distance) {
                 min_distance = distance;
             }
             if (m_cnt_connections > nearest_dots.size()) {
-                nearest_dots.emplace(std::make_pair(std::make_pair(node.first, node.second), std::make_pair(x, y)), distance);
+                nearest_dots.emplace(std::make_pair(std::make_pair(cx, cy), std::make_pair(x, y)), distance);
             }
             else {
                 auto max_remouted_pair = find_max_distance(nearest_dots);
                 if (max_remouted_pair->second > min_distance) {
                     nearest_dots.erase(max_remouted_pair);
-                    nearest_dots.emplace(std::make_pair(std::make_pair(node.first, node.second), std::make_pair(x, y)), distance);
+                    nearest_dots.emplace(std::make_pair(std::make_pair(cx, cy), std::make_pair(x, y)), distance);
                 }
             }
         }
@@ -166,7 +165,7 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
         m_all_nodes.push_back(pair);
         calculate_distances();
         connect_MST();
-        std::this_thread::sleep_for(std::chrono::milliseconds(0)); //strange bug. doens't connect part of nodes.
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); //strange bug. doens't connect part of nodes.
         //printf("debug? %d\n", i++);
         //printf("time = %f; total time = %f\n", std::chrono::duration_cast<second_t>(clock_t::now() - beg).count(),
         //        total_time += std::chrono::duration_cast<second_t>(clock_t::now() - beg).count());
@@ -207,9 +206,8 @@ void GraphProcessor::process_realtime(const int x, const int y, const bool mouse
 }
 
 bool GraphProcessor::contains(const int x, const int y) noexcept {
-    for (const auto& item : m_all_nodes) {
-        if (item.first == x and item.second == y or
-            item.first == y and item.second == x) {
+    for (const auto& [cx, cy] : m_all_nodes) {
+        if (cx == x && cy == y || cx == y && cy == x) {
             return true;
         }
     }
@@ -260,26 +258,26 @@ void GraphProcessor::connect_MST() noexcept {
 
 void GraphProcessor::print_connected() noexcept {
     printf("contain %d m_connected_nodes", m_connected_nodes.size());
-    for (const auto& item : m_connected_nodes) {
-        printf("Node: [%d %d]\n", item.second, item.first);
+    for (const auto& [x, y] : m_connected_nodes) {
+        printf("Node: [%d %d]\n", x, y);
     }
 }
 void GraphProcessor::print_not_connected() noexcept {
     printf("contain %d m_not_connected_nodes", m_not_connected_nodes.size());
-    for (const auto& item : m_not_connected_nodes) {
-        printf("Node: [%d %d]\n", item.second, item.first);
+    for (const auto& [x, y] : m_not_connected_nodes) {
+        printf("Node: [%d %d]\n", x, y);
     }
 }
 void GraphProcessor::print_all_nodes() noexcept {
     printf("contain %d m_all_nodes", m_distances.size());
-    for (const auto& item : m_all_nodes) {
-        printf("Node: [%d %d]\n", item.second, item.first);
+    for (const auto& [x, y] : m_all_nodes) {
+        printf("Node: [%d %d]\n", x, y);
     }
 }
 void GraphProcessor::print_distances() noexcept {
     printf("contain %d distances", m_distances.size());
-    for (const auto& item : m_distances) {
-        printf("Pair: [%d %d] and [%d %d] distance = %f\n", item.first.first.first, item.first.first.second, item.first.second.first, item.first.second.second, item.second);
+    for (const auto& [pairs, distance] : m_distances) {
+        printf("Pair: [%d %d] and [%d %d] distance = %f\n", pairs.first.first, pairs.first.second, pairs.second.first, pairs.second.second, distance);
     }
 }
 
@@ -311,23 +309,13 @@ void GraphProcessor::print_data() noexcept {
     printf("Statistics\n");
     printf("Count of nodes: %I64lu\n", m_all_nodes.size());
     printf("List of nodes:\n");
-    for (const auto& i : m_all_nodes) {
-        printf("[%d %d]\t", i.first, i.second);
-    }
+    print_all_nodes();
     std::cout << "\n====\nNodes and distances between nodes:" << std::endl;
     if (m_distances.size() < 1) {
         printf("NaN\n");
     }
     int j = 0;
-    for (const auto& i : m_distances) {
-        printf("%d [%d %d\t %d %d\t\t %f]\n",
-            j++,
-            i.first.first.first,
-            i.first.first.second,
-            i.first.second.first,
-            i.first.second.second,
-            i.second);
-    }
+    print_distances();
 }
 
 

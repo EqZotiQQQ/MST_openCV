@@ -122,7 +122,8 @@ int main(int argc, char* argv[]) {
     }
 #endif
     int ret = 0;
-    GraphProcessor gp;
+    GraphProcessor gp(h,w);
+    //GraphProcessor gp;
     gp.set_options(mouse_mod, rt);
 
     ret = gp.launch();
