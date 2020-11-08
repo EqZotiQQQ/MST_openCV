@@ -1,11 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-r1 -f0 -h800 -w1600</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-r0 -f2 -h800 -w1600</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerEnvironment>D:\SourceCode\openCV\opencv\build\x64\vc15\lib</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-r1 -f0 -h800 -w1600</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-r0 -f2 -h800 -w1600</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerEnvironment>D:\SourceCode\openCV\opencv\build\x64\vc15\lib</LocalDebuggerEnvironment>
   </PropertyGroup>
 </Project>
