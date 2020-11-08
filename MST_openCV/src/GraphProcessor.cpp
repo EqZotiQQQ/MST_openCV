@@ -1,18 +1,17 @@
 #include "../headers/GraphProcessor.h"
 
-#include <iostream>
 #include <unordered_map>
 #include <functional>
 #include <utility>
 #include <thread>
 #include <random>
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 
 
 using distance_t = double;
 using node_t = std::pair<int, int>;
-using pnode_t = node_t*;
 using dots_pair_t = std::pair<node_t, node_t>;
 using total_distances_t = std::unordered_map<dots_pair_t, distance_t, KeyHasherPair<dots_pair_t>>;
 
@@ -30,25 +29,22 @@ GraphProcessor::GraphProcessor() :
 }
 
 GraphProcessor::GraphProcessor(const int rows,
-    const int columns,
-    const std::string& image_name,
-    const FLOATING_MOUSE_NODE mouse,
-    const RUN_TYPE run_type) noexcept :
-    m_img_rows(rows),
-    m_img_columns(columns),
-    m_window_name(image_name),
-    m_cnt_connections(1),
-    m_floating_node(mouse),
-    m_run_type(run_type),
-    m_image(cv::Mat(rows, columns, CV_8UC3, cv::Scalar(0, 0, 0)))
+                                    const int columns,
+                                    std::string image_name,
+                                    const FLOATING_MOUSE_NODE mouse,
+                                    const RUN_TYPE run_type) noexcept :
+                                m_img_rows(rows),
+                                m_img_columns(columns),
+                                m_window_name(std::move(image_name)),
+                                m_cnt_connections(1),
+                                m_floating_node(mouse),
+                                m_run_type(run_type),
+                                m_image(cv::Mat(rows, columns, CV_8UC3, cv::Scalar(0, 0, 0)))
 {
 
     printf("Image size: [%d %d]\n", m_image.rows, m_image.cols);
     printf("Press esc button to exit.\n");
     printf("scroll up/down to increase/reduce number of connections\n");
-}
-
-GraphProcessor::~GraphProcessor() noexcept {
 }
 
 int GraphProcessor::launch() noexcept {
@@ -94,10 +90,10 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
 #ifdef __linux__ 
         if (event == cv::EVENT_MOUSEHWHEEL) {
             if (cv::getMouseWheelDelta(flags) > 0) {
-                graph_processor->change_connectivity(0);
+                graph_processor->change_connectivity(false);
             }
             else {
-                graph_processor->change_connectivity(1);
+                graph_processor->change_connectivity(true);
             }
         }
 #elif _WIN32
@@ -118,12 +114,10 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
     std::mt19937 gen(rand_dev());
     std::uniform_int_distribution<> rand_rows(0, m_img_columns);
     std::uniform_int_distribution<> rand_cols(0, m_img_rows);
-    int i = 0;
-    double total_time = 0;
     while (true) {
         auto pair = std::make_pair(rand_rows(gen), rand_cols(gen));
         if (contains(pair.first, pair.second)) {
-            return;
+            continue;
         }
         calculate_graph(pair);
     }
@@ -205,12 +199,12 @@ void GraphProcessor::calculate_distances() noexcept {
 }
 
 void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
-    if (nodes.size() == 0) {
+    if (nodes.empty()) {
         return;
     }
     cv::Mat image = m_image.clone();
     if (m_cnt_connections == 1) {
-        std::vector<node_t>::const_iterator element = nodes.cbegin();
+        auto element = nodes.cbegin();
         double min_distance = INT_MAX;
         for (auto node = nodes.cbegin(); node != nodes.cend(); ++node) {
             double distance_to_node = std::sqrt(std::pow(node->first - x, 2) + std::pow(node->second - y, 2));
@@ -302,15 +296,15 @@ void GraphProcessor::refresh_img() noexcept {
 
 void GraphProcessor::print_statistics() noexcept {
     printf("==== Statistics ====\n");
-    printf("Number of nodes: %d\n\
-            Matrix size: %d %d\n",
+    printf("Number of nodes: %ld\n\
+            Matrix size: %ld %ld\n",
         nodes.size(),
         matrix.size(), matrix[0].size());
 }
 
 total_distances_t::const_iterator GraphProcessor::find_max_distance(const total_distances_t& container) noexcept {
     double max_dist = 0;
-    total_distances_t::const_iterator ret_iterator = container.begin();
+    auto ret_iterator = container.begin();
     for (auto i = container.begin(); i != container.end(); ++i) {
         if (i->second > max_dist) {
             max_dist = i->second;

@@ -76,10 +76,10 @@ public:
     GraphProcessor();
     GraphProcessor(const int rows,
         const int columns,
-        const std::string& image_name,
+        std::string image_name,
         const FLOATING_MOUSE_NODE mouse,
         const RUN_TYPE run_type) noexcept;
-    ~GraphProcessor() noexcept;
+    ~GraphProcessor() noexcept = default;
     int launch() noexcept;
 };
 
