@@ -1,0 +1,12 @@
+Set up openCV for visual studio:
+
+Debugging:
+Environment = PATH=D:\SourceCode\openCV\opencv\build\x64\vc15\bin
+C/C++:
+AdditionalIncludeDirectories = D:\SourceCode\openCV\opencv\build\include
+Linker:
+AdditionalLibraryDirectories = D:\SourceCode\openCV\opencv\build\x64\vc15\lib
+Copy opencv_world450.lib, opencv_world450d.lib into the project
+
+Set up openCV window:
+
