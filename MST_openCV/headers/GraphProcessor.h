@@ -6,14 +6,14 @@
 #include <unordered_map>
 #include <utility>
 
-/*r(0|1|2) opetions*/
+/*r(0|1|2) options*/
 enum RUN_TYPE {
     REAL_TIME = 0,
     LATENCY_FLOW = 1,
     STATIC_DATA = 2
 };
 
-/*f(0|1|2) opetions*/
+/*f(0|1|2) options*/
 enum FLOATING_MOUSE_NODE {
     OFF = 0,
     ON = 1,
@@ -55,7 +55,9 @@ private:
     int m_cnt_connections;
 
     void create_line(const cv::Mat& image, const cv::Point&& start, const cv::Point&& end) noexcept;
-    void create_circles() noexcept;
+    void init() noexcept;
+    void place_circles_on_image() noexcept;
+    void place_circles_on_subimage(cv::Mat& res, std::vector<node_t>::iterator begin, std::vector<node_t>::iterator end) noexcept;
     void refresh_img() noexcept;
     void print_statistics() noexcept;
     void calculate_graph(std::pair<int, int> pair) noexcept;

@@ -1,10 +1,13 @@
-#include "../headers/GraphProcessor.h"
+﻿#include "../headers/GraphProcessor.h"
 
 #include <unordered_map>
 #include <functional>
 #include <utility>
 #include <thread>
 #include <random>
+#include <algorithm>
+#include <numeric>
+#include <mutex>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
@@ -140,9 +143,49 @@ void GraphProcessor::calculate_graph(std::pair<int, int> pair) noexcept {
     connect_MST();
 }
 
-void GraphProcessor::create_circles() noexcept {
-    for (const auto& [x, y] : nodes) {
-        cv::circle(m_image, cv::Point(x, y), 3, cv::Scalar(120, 250, 120), -1, cv::LINE_AA);
+/*
+i can simply store one more image that contains only dots and dont create dots every time.
+*/
+void GraphProcessor::place_circles_on_subimage(cv::Mat& res, std::vector<node_t>::iterator begin, std::vector<node_t>::iterator end) noexcept {
+    std::lock_guard<std::mutex> lc(std::mutex());
+    while (begin != end) {
+        cv::circle(res, cv::Point(begin->first, begin->second), 3, cv::Scalar(120, 250, 120), -1, cv::LINE_AA);
+        std::advance(begin, 1);
+    }
+}
+
+
+void GraphProcessor::place_circles_on_image() noexcept {
+
+    unsigned long length = nodes.size();
+    unsigned long min_per_thread = 10;
+    unsigned long max_threads = (length + min_per_thread - 1) / min_per_thread;
+    unsigned long hardware_threads = std::thread::hardware_concurrency();
+    unsigned long num_threads = std::min(hardware_threads != 0 ? hardware_threads : 2, max_threads);
+    unsigned long block_size = length / num_threads;
+
+
+    std::vector<cv::Mat> results(num_threads);
+    std::vector<std::thread> threads(num_threads - 1);
+    auto block_start = nodes.begin();
+    for (int i = 0; i < num_threads - 1; i++) {
+        auto block_end = block_start;
+        std::advance(block_end, block_size);
+        results[i] = cv::Mat(m_image.rows, m_image.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+        threads[i] = std::thread(&GraphProcessor::place_circles_on_subimage, GraphProcessor(), std::ref(results[i]), block_start, block_end);
+    }
+    auto back = nodes.end();
+
+    std::prev(back);
+
+    results[num_threads - 1] = cv::Mat(m_image.rows, m_image.cols, CV_8UC3, cv::Scalar(0, 0, 0));
+
+    place_circles_on_subimage(std::ref(results[num_threads-1]), block_start, back);
+
+    std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
+
+    for (const auto& result : results) {
+        m_image += result;
     }
     cv::circle(m_image, cv::Point(nodes.back().first, nodes.back().second), 3, cv::Scalar(0, 0, 250), -1, cv::LINE_AA);
     cv::circle(m_image, cv::Point(nodes.front().first, nodes.front().second), 3, cv::Scalar(250, 0, 250), -1, cv::LINE_AA);
@@ -287,7 +330,7 @@ void GraphProcessor::draw_graph(const std::vector<int>& parent) noexcept {
 
 void GraphProcessor::create_line(const cv::Mat& image, const cv::Point&& start, const cv::Point&& end) noexcept {
     cv::line(image, start, end, cv::Scalar(80, 80, 80), 2, cv::LINE_4);
-    create_circles();
+    place_circles_on_image();
 }
 
 void GraphProcessor::refresh_img() noexcept {
