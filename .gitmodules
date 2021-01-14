@@ -1,3 +1,6 @@
 [submodule "MST_openCV/threadpool"]
 	path = MST_openCV/threadpool
 	url = https://github.com/eqzotiqqq/threadpool
+[submodule "ThreadPool"]
+	path = ThreadPool
+	url = https://github.com/EqZotiQQQ/ThreadPool
