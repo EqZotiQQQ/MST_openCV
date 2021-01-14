@@ -6,6 +6,10 @@
 #include <unordered_map>
 #include <utility>
 
+#include "threadpool/ThreadPool/headers/ThreadPool.h"
+#include "threadpool/ThreadPool/headers/ThreadManager.h"
+#include "threadpool/ThreadPool/headers/ThreadsafeQueue.h"
+
 /*r(0|1|2) options*/
 enum RUN_TYPE {
     REAL_TIME = 0,
@@ -53,6 +57,7 @@ private:
     const int m_img_rows;
     const int m_img_columns;
     int m_cnt_connections;
+    ThreadPool tp;
 
     void create_line(const cv::Mat& image, const cv::Point&& start, const cv::Point&& end) noexcept;
     void init() noexcept;

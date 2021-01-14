@@ -21,9 +21,21 @@
     <ClCompile Include="src/GraphProcessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="threadpool\ThreadPool\main.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="headers/GraphProcessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="threadpool\ThreadPool\headers\ThreadManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="threadpool\ThreadPool\headers\ThreadPool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="threadpool\ThreadPool\headers\ThreadsafeQueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

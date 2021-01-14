@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
             if (std::string(optarg) == "0") {
                 rt = RUN_TYPE::REAL_TIME;
             }
-            else if (std::string(optarg) == "1") {
+            else if (std::string(optarg) == "1") { 
                 rt = RUN_TYPE::LATENCY_FLOW;
             }
             else if (std::string(optarg) == "2") {

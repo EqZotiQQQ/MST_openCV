@@ -8,9 +8,11 @@
 #include <algorithm>
 #include <numeric>
 #include <mutex>
+#include <thread>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
+
 
 
 using distance_t = double;
@@ -166,14 +168,16 @@ void GraphProcessor::place_circles_on_image() noexcept {
 
 
     std::vector<cv::Mat> results(num_threads);
-    std::vector<std::thread> threads(num_threads - 1);
     auto block_start = nodes.begin();
     for (int i = 0; i < num_threads - 1; i++) {
         auto block_end = block_start;
         std::advance(block_end, block_size);
         results[i] = cv::Mat(m_image.rows, m_image.cols, CV_8UC3, cv::Scalar(0, 0, 0));
-        threads[i] = std::thread(&GraphProcessor::place_circles_on_subimage, GraphProcessor(), std::ref(results[i]), block_start, block_end);
+        tp.push([&]{
+            place_circles_on_subimage(results[i], block_start, block_end);
+        });
     }
+    tp.barrier();
     auto back = nodes.end();
 
     std::prev(back);
@@ -181,8 +185,7 @@ void GraphProcessor::place_circles_on_image() noexcept {
     results[num_threads - 1] = cv::Mat(m_image.rows, m_image.cols, CV_8UC3, cv::Scalar(0, 0, 0));
 
     place_circles_on_subimage(std::ref(results[num_threads-1]), block_start, back);
-
-    std::for_each(threads.begin(), threads.end(), std::mem_fn(&std::thread::join));
+    printf("here!\n");
 
     for (const auto& result : results) {
         m_image += result;
@@ -257,8 +260,7 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
             }
         }
         create_line(image, cv::Point(element->first, element->second), cv::Point(x, y));
-    }
-    else {
+    } else {
         std::unordered_map<std::pair< std::pair<int, int>, std::pair<int, int>>, distance_t, KeyHasherPair<dots_pair_t>> nearest_dots;
         for (const auto& [cx, cy] : nodes) {
             double min_distance = INT_MAX;
@@ -270,8 +272,7 @@ void GraphProcessor::connect_nearest(const int x, const int y) noexcept {
                 auto p1 = std::make_pair(cx, cy);
                 auto p2 = std::make_pair(x, y);
                 nearest_dots.emplace(std::make_pair(p1, p2), distance);
-            }
-            else {
+            } else {
                 auto max_remouted_pair = find_max_distance(nearest_dots);
                 if (max_remouted_pair->second > min_distance) {
                     auto p1 = std::make_pair(cx, cy);
@@ -313,8 +314,7 @@ void GraphProcessor::change_connectivity(const bool distination) noexcept {
         if (nodes.size() > m_cnt_connections) {
             m_cnt_connections++;
         }
-    }
-    else {
+    } else {
         if (m_cnt_connections > 1) {
             m_cnt_connections--;
         }
@@ -339,13 +339,12 @@ void GraphProcessor::refresh_img() noexcept {
 
 void GraphProcessor::print_statistics() noexcept {
     printf("==== Statistics ====\n");
-    printf("Number of nodes: %ld\n\
-            Matrix size: %ld %ld\n",
+    printf("Number of nodes: %ld\nMatrix size: %ld %ld\n",
         nodes.size(),
         matrix.size(), matrix[0].size());
 }
 
-total_distances_t::const_iterator GraphProcessor::find_max_distance(const total_distances_t& container) noexcept {
+auto GraphProcessor::find_max_distance(const total_distances_t& container) noexcept -> decltype(container.begin()){
     double max_dist = 0;
     auto ret_iterator = container.begin();
     for (auto i = container.begin(); i != container.end(); ++i) {

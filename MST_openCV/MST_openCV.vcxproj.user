@@ -3,11 +3,19 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommandArguments>-r1 -f0 -h400 -w800</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerEnvironment>D:\SourceCode\openCV\opencv\build\x64\vc15\lib</LocalDebuggerEnvironment>
+    <LocalDebuggerEnvironment>D:\SourceCode\openCV\opencv\build\x64\vc15\bin</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommandArguments>-r1 -f0 -h400 -w800</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerEnvironment>D:\SourceCode\openCV\opencv\build\x64\vc15\lib</LocalDebuggerEnvironment>
+    <LocalDebuggerEnvironment>D:\SourceCode\openCV\opencv\build\x64\vc15\bin</LocalDebuggerEnvironment>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LocalDebuggerEnvironment>D:\SourceCode\openCV\opencv\build\x64\vc15\bin</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LocalDebuggerEnvironment>D:\SourceCode\openCV\opencv\build\x64\vc15\bin</LocalDebuggerEnvironment>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>
