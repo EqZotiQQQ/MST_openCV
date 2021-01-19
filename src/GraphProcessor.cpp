@@ -17,7 +17,6 @@ using total_distances_t = std::unordered_map<dots_pair_t, distance_t, KeyHasherP
 
 
 GraphProcessor::GraphProcessor() :
-    tp(1),
     m_img_rows(800),
     m_img_columns(1200),
     m_window_name("Graph"),
@@ -36,7 +35,7 @@ GraphProcessor::GraphProcessor(const int rows,
                                     const RUN_TYPE run_type) noexcept :
                                 m_img_rows(rows),
                                 m_img_columns(columns),
-                                m_window_name(std::move(image_name)), tp(1),
+                                m_window_name(std::move(image_name)),
                                 m_cnt_connections(1),
                                 m_floating_node(mouse),
                                 m_run_type(run_type),

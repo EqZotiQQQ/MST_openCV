@@ -8,7 +8,7 @@ find_package(Threads REQUIRED)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-add_subdirectory(threadpool/ThreadPool)
+add_subdirectory(ThreadPool)
 
 set(HEADERS
         headers/GraphProcessor.h
