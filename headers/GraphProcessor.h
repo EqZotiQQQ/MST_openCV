@@ -6,9 +6,9 @@
 #include <unordered_map>
 #include <utility>
 
-#include "threadpool/ThreadPool/headers/ThreadPool.h"
-#include "threadpool/ThreadPool/headers/ThreadManager.h"
-#include "threadpool/ThreadPool/headers/ThreadsafeQueue.h"
+#include "ThreadPool/ThreadPool/headers/ThreadPool.h"
+#include "ThreadPool/ThreadPool/headers/ThreadManager.h"
+#include "ThreadPool/ThreadPool/headers/ThreadsafeQueue.h"
 
 /*r(0|1|2) options*/
 enum RUN_TYPE {

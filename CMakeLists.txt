@@ -24,6 +24,20 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/headers
 )
 
+set(CMAKE_CXX_CPPCHECK "cppcheck")
+
+find_program(CMAKE_CXX_CPPCHECK NAMES cppcheck)
+
+if (CMAKE_CXX_CPPCHECK)
+    list(
+        APPEND CMAKE_CXX_CPPCHECK 
+            "--enable=warning"
+            "--inconclusive"
+            "--force" 
+            "--inline-suppr"
+    )
+endif()
+
 add_executable(MST_openCV ${SOURCES} ${HEADERS})
 
 target_link_libraries( MST_openCV ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT} )

@@ -6,14 +6,9 @@
 #include <thread>
 #include <random>
 #include <algorithm>
-#include <numeric>
-#include <mutex>
-#include <thread>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
-
-
 
 using distance_t = double;
 using node_t = std::pair<int, int>;
@@ -22,6 +17,7 @@ using total_distances_t = std::unordered_map<dots_pair_t, distance_t, KeyHasherP
 
 
 GraphProcessor::GraphProcessor() :
+    tp(1),
     m_img_rows(800),
     m_img_columns(1200),
     m_window_name("Graph"),
@@ -40,7 +36,7 @@ GraphProcessor::GraphProcessor(const int rows,
                                     const RUN_TYPE run_type) noexcept :
                                 m_img_rows(rows),
                                 m_img_columns(columns),
-                                m_window_name(std::move(image_name)),
+                                m_window_name(std::move(image_name)), tp(1),
                                 m_cnt_connections(1),
                                 m_floating_node(mouse),
                                 m_run_type(run_type),
@@ -92,7 +88,7 @@ void GraphProcessor::s_mouse_callback(int event, int x, int y, int flags, void* 
         }
     }
     if (graph_processor->m_floating_node == FLOATING_MOUSE_NODE::NEAREST_NODE) {
-#ifdef __linux__ 
+#if defined(__linux__) or defined(__APPLE__)
         if (event == cv::EVENT_MOUSEHWHEEL) {
             if (cv::getMouseWheelDelta(flags) > 0) {
                 graph_processor->change_connectivity(false);
@@ -149,15 +145,17 @@ void GraphProcessor::calculate_graph(std::pair<int, int> pair) noexcept {
 i can simply store one more image that contains only dots and dont create dots every time.
 */
 void GraphProcessor::place_circles_on_subimage(cv::Mat& res, std::vector<node_t>::iterator begin, std::vector<node_t>::iterator end) noexcept {
-    std::lock_guard<std::mutex> lc(std::mutex());
     while (begin != end) {
+        printf("BEGIN\n");
         cv::circle(res, cv::Point(begin->first, begin->second), 3, cv::Scalar(120, 250, 120), -1, cv::LINE_AA);
         std::advance(begin, 1);
+        printf("END\n");
     }
 }
 
 
 void GraphProcessor::place_circles_on_image() noexcept {
+    printf("Node count: {%d}\n", nodes.size());
 
     unsigned long length = nodes.size();
     unsigned long min_per_thread = 10;
@@ -185,7 +183,6 @@ void GraphProcessor::place_circles_on_image() noexcept {
     results[num_threads - 1] = cv::Mat(m_image.rows, m_image.cols, CV_8UC3, cv::Scalar(0, 0, 0));
 
     place_circles_on_subimage(std::ref(results[num_threads-1]), block_start, back);
-    printf("here!\n");
 
     for (const auto& result : results) {
         m_image += result;

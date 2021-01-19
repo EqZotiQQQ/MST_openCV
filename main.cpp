@@ -1,4 +1,4 @@
-#ifdef __linux__ 
+#if defined(__linux__) or defined(__APPLE__)
 #include <getopt.h>
 #elif _WIN32
 #include <string>
@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
     enum FLOATING_MOUSE_NODE mouse_mod = FLOATING_MOUSE_NODE::OFF;
     int h = 150;
     int w = 350;
-#ifdef __linux__
+#if defined(__linux__) or defined(__APPLE__)
     int rez = 0;
     while ((rez = getopt(argc, argv, "r:f:h:w:")) != -1) {
         switch (rez) {
